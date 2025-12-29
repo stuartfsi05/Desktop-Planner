@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amanda_planner/features/planner/providers/task_provider.dart';
+import 'package:amanda_planner/shared/widgets/formatted_text_editor.dart';
 
 class VerticalWeeklyView extends StatefulWidget {
   final int weekIndex; // 0-4
@@ -21,15 +22,10 @@ class VerticalWeeklyView extends StatefulWidget {
 }
 
 class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
-  late TextEditingController _leftNoteController;
-  late TextEditingController _rightNoteController;
 
   @override
   void initState() {
     super.initState();
-    _leftNoteController = TextEditingController();
-    _rightNoteController = TextEditingController();
-    
     // Load notes when widget initializes or updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotes();
@@ -47,20 +43,19 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
   void _loadNotes() async {
     final provider = Provider.of<TaskProvider>(context, listen: false);
     await provider.loadWeeklyNotes(widget.year, widget.monthIndex, widget.weekIndex);
-    
-    _leftNoteController.text = provider.getWeeklyNote(widget.year, widget.monthIndex, widget.weekIndex, 'LEFT');
-    _rightNoteController.text = provider.getWeeklyNote(widget.year, widget.monthIndex, widget.weekIndex, 'RIGHT');
+    // Editor handles updates via Key
   }
   
   void _saveNote(String side, String content) {
     final provider = Provider.of<TaskProvider>(context, listen: false);
+    // Debounce is ideal but relying on FormattedTextEditor to emit changes.
+    // Given WeeklyView might have many small edits, maybe just save directly?
+    // Provider.saveWeeklyNote writes to DB. Frequent writes are okay for local DB.
     provider.saveWeeklyNote(widget.year, widget.monthIndex, widget.weekIndex, side, content);
   }
 
   @override
   void dispose() {
-    _leftNoteController.dispose();
-    _rightNoteController.dispose();
     super.dispose();
   }
 
@@ -172,7 +167,7 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                   ),
                 ),
                 // Editable Note (Transparent bg, colored container)
-                 _buildNoteSection(_leftNoteController, const Color(0xFFDAD8D3), "Notas da Semana", 'LEFT'), // Grey
+                 _buildNoteSection(const Color(0xFFDAD8D3), "Notas da Semana", 'LEFT', taskProvider), // Grey
               ],
             ),
           ),
@@ -203,7 +198,7 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                   ),
                 ),
                 // Editable Note
-                 _buildNoteSection(_rightNoteController, const Color(0xFFDAD8D3), "Notas da Semana", 'RIGHT'), // Grey
+                 _buildNoteSection(const Color(0xFFDAD8D3), "Notas da Semana", 'RIGHT', taskProvider), // Grey
               ],
             ),
           ),
@@ -212,7 +207,10 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
     );
   }
   
-  Widget _buildNoteSection(TextEditingController controller, Color color, String hint, String side) {
+  Widget _buildNoteSection(Color color, String hint, String side, TaskProvider provider) {
+    final content = provider.getWeeklyNote(widget.year, widget.monthIndex, widget.weekIndex, side);
+    final noteKey = "weekly_note_${widget.year}_${widget.monthIndex}_${widget.weekIndex}_$side";
+
     return Container(
       height: 120,
       margin: const EdgeInsets.only(top: 16),
@@ -227,18 +225,13 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
         children: [
            Text(hint, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black.withOpacity(0.4))),
            Expanded(
-             child: TextField(
-                controller: controller,
-                maxLines: null,
-                expands: true,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.only(top: 4), // Slight padding
-                  filled: false, // Ensure transparent
-                ),
-                style: const TextStyle(fontSize: 13, height: 1.4),
+             child: FormattedTextEditor(
+                key: ValueKey(noteKey),
+                initialContent: content,
+                placeholder: '',
+                isCompact: true,
                 onChanged: (val) => _saveNote(side, val),
-              ),
+             ),
            ),
         ],
       ),

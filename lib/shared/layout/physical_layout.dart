@@ -116,7 +116,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
                             
                             // Content with padding for tabs
                             Padding(
-                              padding: EdgeInsets.only(left: showLeftTabs ? 60.0 : 30.0, top: 80.0, right: 30, bottom: 20),
+                              padding: EdgeInsets.only(left: showLeftTabs ? 60.0 : 30.0, top: 50.0, right: 30, bottom: 20),
                               child: child,
                             ),
                             

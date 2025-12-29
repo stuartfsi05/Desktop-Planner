@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:amanda_planner/features/planner/providers/task_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:amanda_planner/shared/widgets/formatted_text_editor.dart';
 
 class DailyView extends StatefulWidget {
   final DateTime date;
@@ -18,7 +19,6 @@ class DailyView extends StatefulWidget {
 }
 
 class _DailyViewState extends State<DailyView> {
-  final TextEditingController _notesController = TextEditingController();
   Timer? _debounce;
 
   @override
@@ -41,7 +41,7 @@ class _DailyViewState extends State<DailyView> {
   void _loadData() async {
     final provider = Provider.of<TaskProvider>(context, listen: false);
     await provider.loadDashboard(widget.date);
-    _notesController.text = provider.currentNote;
+    // Note: FormattedTextEditor handles content update via Key
   }
 
   void _onNoteChanged(String value) {
@@ -53,7 +53,6 @@ class _DailyViewState extends State<DailyView> {
 
   @override
   void dispose() {
-    _notesController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -108,40 +107,25 @@ class _DailyViewState extends State<DailyView> {
                           icon: Icons.edit_note,
                           headerColor: Colors.white, 
                           titleColor: theme.colorScheme.primary,
-                          // Toolbar for text formatting
-                          action: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildFormatIcon(Icons.format_bold, "Negrito"),
-                              _buildFormatIcon(Icons.format_italic, "Itálico"),
-                              _buildFormatIcon(Icons.format_size, "Tamanho"),
-                              _buildFormatIcon(Icons.format_color_text, "Cor"),
-                              _buildFormatIcon(Icons.format_paint, "Fundo"),
-                            ],
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(16),
-                                bottomRight: Radius.circular(16)
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _notesController,
-                              onChanged: _onNoteChanged,
-                              maxLines: null,
-                              expands: true,
-                              style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                              decoration: InputDecoration(
-                                hintText: "Digite aqui suas notas do dia...",
-                                hintStyle: TextStyle(color: Colors.grey.shade400),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.all(20),
-                                fillColor: Colors.transparent, 
-                              ),
-                            ),
+                          // No fake toolbar action
+                          child: Consumer<TaskProvider>(
+                            builder: (context, provider, _) { 
+                               return Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(16),
+                                    bottomRight: Radius.circular(16)
+                                  ),
+                                ),
+                                child: FormattedTextEditor(
+                                  key: ValueKey("daily_note_${widget.date.toIso8601String()}"),
+                                  initialContent: provider.currentNote, 
+                                  placeholder: "Digite aqui suas notas do dia...",
+                                  onChanged: _onNoteChanged,
+                                ),
+                              );
+                            }
                           ),
                         ),
                       ),
@@ -208,22 +192,6 @@ class _DailyViewState extends State<DailyView> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFormatIcon(IconData icon, String tooltip) {
-    return IconButton(
-      icon: Icon(icon, size: 16, color: Colors.grey.shade600),
-      tooltip: tooltip,
-      constraints: const BoxConstraints(),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      onPressed: () {
-        // Placeholder for rich text logic
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Formatação '$tooltip' selecionada (Simulação)"),
-          duration: const Duration(milliseconds: 500),
-        ));
-      },
     );
   }
 

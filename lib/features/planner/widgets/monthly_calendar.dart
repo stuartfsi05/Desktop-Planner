@@ -82,12 +82,12 @@ class MonthlyCalendar extends StatelessWidget {
   Widget _buildWeekRow(BuildContext context, int weekIndex, int offset, int daysInMonth) {
      final theme = Theme.of(context);
      final weekColor = [
-        Colors.blue.shade400,
-        Colors.teal.shade400,
-        Colors.orange.shade400,
-        Colors.deepPurple.shade400,
-        Colors.pink.shade400,
-        Colors.cyan.shade400,
+        const Color(0xFFFADADA),
+        const Color(0xFFD6E6BE),
+        const Color(0xFFAECCCC),
+        const Color(0xFFEDB1B1),
+        const Color(0xFFECE9AC),
+        const Color(0xFFC8B1C0),
      ][weekIndex % 6];
 
     // Check if this week has ANY days in the current month
