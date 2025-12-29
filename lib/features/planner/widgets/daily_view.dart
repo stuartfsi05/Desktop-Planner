@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'task_provider.dart';
+import 'package:amanda_planner/features/planner/providers/task_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -78,52 +78,69 @@ class _DailyViewState extends State<DailyView> {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 24), // Reduced top padding
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), // Reduced padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header shifted UP relative to arrow
+          // Header
           Center(
-            child: Transform.translate(
-              offset: const Offset(0, -5), // Visual adjustment
-              child: Text(
-                fullTitle,
-                style: titleStyle,
-                textAlign: TextAlign.center,
-              ),
+            child: Text(
+              fullTitle,
+              style: titleStyle,
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // LEFT COLUMN: Notes & Appointments (Flex 3)
+                // LEFT COLUMN: Notes & Appointments (Flex 2 - Reduced width to give more to Tasks)
                 Expanded(
-                  flex: 3, 
+                  flex: 2, 
                   child: Column(
                     children: [
                       // NOTES SECTION (Larger Block)
                       Expanded(
-                        flex: 2, // More space for notes
+                        flex: 5, // More space for notes
                         child: DashboardSection(
                           title: "Anotações do Dia",
                           icon: Icons.edit_note,
-                          headerColor: theme.colorScheme.surface, 
+                          headerColor: Colors.white, 
                           titleColor: theme.colorScheme.primary,
-                          child: TextField(
-                            controller: _notesController,
-                            onChanged: _onNoteChanged,
-                            maxLines: null,
-                            expands: true,
-                            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                            decoration: InputDecoration(
-                              hintText: "Digite aqui suas notas do dia...",
-                              hintStyle: TextStyle(color: Colors.grey.shade400),
-                              border: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: const EdgeInsets.all(20),
-                              fillColor: Colors.transparent, 
+                          // Toolbar for text formatting
+                          action: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildFormatIcon(Icons.format_bold, "Negrito"),
+                              _buildFormatIcon(Icons.format_italic, "Itálico"),
+                              _buildFormatIcon(Icons.format_size, "Tamanho"),
+                              _buildFormatIcon(Icons.format_color_text, "Cor"),
+                              _buildFormatIcon(Icons.format_paint, "Fundo"),
+                            ],
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(16),
+                                bottomRight: Radius.circular(16)
+                              ),
+                            ),
+                            child: TextField(
+                              controller: _notesController,
+                              onChanged: _onNoteChanged,
+                              maxLines: null,
+                              expands: true,
+                              style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                              decoration: InputDecoration(
+                                hintText: "Digite aqui suas notas do dia...",
+                                hintStyle: TextStyle(color: Colors.grey.shade400),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: const EdgeInsets.all(20),
+                                fillColor: Colors.transparent, 
+                              ),
                             ),
                           ),
                         ),
@@ -132,7 +149,7 @@ class _DailyViewState extends State<DailyView> {
                       
                       // APPOINTMENTS SECTION (Smaller Block)
                       Expanded(
-                        flex: 1, // Less space for appointments
+                        flex: 4, 
                         child: _buildAppointmentsSection(context),
                       ),
                     ],
@@ -140,19 +157,19 @@ class _DailyViewState extends State<DailyView> {
                 ),
                 const SizedBox(width: 24),
                 
-                // RIGHT COLUMN: Checklists (Flex 2 - Wider)
+                // RIGHT COLUMN: Checklists (Flex 3 - Wider columns for tasks)
                 Expanded(
-                  flex: 2, 
+                  flex: 3, 
                   child: Column(
                     children: [
-                      // TOP: Priority Checklist (Top Right)
+                      // TOP: Priority Checklist
                       Expanded(
-                        flex: 1, // Smaller (was 1, now relative to total column flex)
+                        flex: 1, 
                         child: _buildPrioritySection(
                           context, 
                           title: 'Prioridades', 
-                          headerColor: Colors.orange.shade50, 
-                          accentColor: Colors.orange.shade800,
+                          headerColor: const Color(0xFFFDE68A), // Light Gold
+                          accentColor: const Color(0xFFB45309), // Copper/Dark Gold
                           icon: Icons.star_rounded,
                         ),
                       ),
@@ -160,15 +177,15 @@ class _DailyViewState extends State<DailyView> {
                       
                       // BOTTOM: 2 Generic Checklists
                       Expanded(
-                        flex: 2, // Larger (was 1, now 2x priority)
+                        flex: 2, 
                         child: Row(
                           children: [
                             Expanded(child: _buildChecklistSection(
                               context,
                               type: 'morning',
                               title: 'Manhã',
-                              headerColor: Colors.blue.shade50,
-                              accentColor: Colors.blue.shade700,
+                              headerColor: const Color(0xFFBFDBFE), // Soft Blue
+                              accentColor: const Color(0xFF1E40AF), // Dark Blue
                               icon: Icons.wb_sunny_rounded,
                             )),
                             const SizedBox(width: 16),
@@ -176,8 +193,8 @@ class _DailyViewState extends State<DailyView> {
                               context,
                               type: 'afternoon',
                               title: 'Tarde',
-                              headerColor: Colors.indigo.shade50,
-                              accentColor: Colors.indigo.shade700,
+                              headerColor: const Color(0xFFDDD6FE), // Soft Purple
+                              accentColor: const Color(0xFF5B21B6), // Dark Purple
                               icon: Icons.nightlight_round,
                             )),
                           ],
@@ -194,11 +211,90 @@ class _DailyViewState extends State<DailyView> {
     );
   }
 
-  // ... (keep _buildChecklistSection and _buildPrioritySection as is or with minor tweaks if needed, but flex changes above handle layout) ...
-  // Actually I need to keep the file valid, so I must not cut off methods unless I replace them too.
-  // I will assume ReplaceFileContent works by replacing the target range.
-  // The TargetContent below will target the Build method and DashboardSection class to update headers.
+  Widget _buildFormatIcon(IconData icon, String tooltip) {
+    return IconButton(
+      icon: Icon(icon, size: 16, color: Colors.grey.shade600),
+      tooltip: tooltip,
+      constraints: const BoxConstraints(),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      onPressed: () {
+        // Placeholder for rich text logic
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Formatação '$tooltip' selecionada (Simulação)"),
+          duration: const Duration(milliseconds: 500),
+        ));
+      },
+    );
+  }
 
+  // ... (keep _buildAddPriorityDialog and _buildAddItemDialog) ...
+  Future<void> _showAddPriorityDialog(BuildContext context) async {
+    String content = "";
+    await showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const Text("Nova Prioridade"),
+        content: TextField(
+          autofocus: true,
+          decoration: const InputDecoration(hintText: "Descrição da tarefa"),
+          onChanged: (v) => content = v,
+          onSubmitted: (_) => Navigator.pop(context),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () {
+               Navigator.pop(context);
+            }, 
+            child: const Text("Adicionar")
+          )
+        ],
+      )
+    );
+    if (content.isNotEmpty) {
+      if (mounted) {
+        // Create as a TASK
+        await Provider.of<TaskProvider>(context, listen: false).addTask(content, customDate: widget.date, priority: 3); // High priority?
+      }
+    }
+  }
+
+  Future<void> _showAddItemDialog(BuildContext context, String type) async {
+    String content = "";
+    await showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const Text("Novo Item"),
+        content: TextField(
+          autofocus: true,
+          decoration: const InputDecoration(hintText: "Nome do item"),
+          onChanged: (v) => content = v,
+          onSubmitted: (_) => Navigator.pop(context),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () {
+               Navigator.pop(context);
+            }, 
+            child: const Text("Adicionar")
+          )
+        ],
+      )
+    );
+    if (content.isNotEmpty) {
+      if (mounted) {
+        await Provider.of<TaskProvider>(context, listen: false).addDashboardItem(widget.date, type, content);
+      }
+    }
+  }
+  
+  // NOTE: I'm not replacing the whole file so I rely on StartLine/EndLine logic or TargetContent.
+  // Wait, I AM replacing a huge chunk. The previous tool call view_file shows line 62 start of build.
+  // I must include all the helper methods I'm replacing if I use ReplaceFileContent with a huge chunk.
+  
+  // Actually, let's look at _buildAppointmentsSection specifically.
+  
   Widget _buildChecklistSection(
     BuildContext context, 
     {required String type, required String title, required Color headerColor, required Color accentColor, required IconData icon}
@@ -344,70 +440,7 @@ class _DailyViewState extends State<DailyView> {
     );
   }
 
-  Future<void> _showAddPriorityDialog(BuildContext context) async {
-    String content = "";
-    await showDialog(
-      context: context, 
-      builder: (context) => AlertDialog(
-        title: const Text("Nova Prioridade"),
-        content: TextField(
-          autofocus: true,
-          decoration: const InputDecoration(hintText: "Descrição da tarefa"),
-          onChanged: (v) => content = v,
-          onSubmitted: (_) => Navigator.pop(context),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            onPressed: () {
-               Navigator.pop(context);
-            }, 
-            child: const Text("Adicionar")
-          )
-        ],
-      )
-    );
-    if (content.isNotEmpty) {
-      if (mounted) {
-        // Create as a TASK
-        await Provider.of<TaskProvider>(context, listen: false).addTask(content, customDate: widget.date, priority: 3); // High priority?
-      }
-    }
-  }
-
-  Future<void> _showAddItemDialog(BuildContext context, String type) async {
-    String content = "";
-    await showDialog(
-      context: context, 
-      builder: (context) => AlertDialog(
-        title: const Text("Novo Item"),
-        content: TextField(
-          autofocus: true,
-          decoration: const InputDecoration(hintText: "Nome do item"),
-          onChanged: (v) => content = v,
-          onSubmitted: (_) => Navigator.pop(context),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            onPressed: () {
-               Navigator.pop(context);
-            }, 
-            child: const Text("Adicionar")
-          )
-        ],
-      )
-    );
-    if (content.isNotEmpty) {
-      if (mounted) {
-        await Provider.of<TaskProvider>(context, listen: false).addDashboardItem(widget.date, type, content);
-      }
-    }
-  }
-
   Widget _buildAppointmentsSection(BuildContext context) {
-    final titleController = TextEditingController();
-    final detailsController = TextEditingController();
     final theme = Theme.of(context);
 
     return DashboardSection(
@@ -415,135 +448,119 @@ class _DailyViewState extends State<DailyView> {
       icon: Icons.event_note,
       headerColor: theme.colorScheme.surface,
       titleColor: theme.colorScheme.primary, 
-      child: Column(
-        children: [
-          // List of Events
-          Expanded(
-            child: Consumer<TaskProvider>(
-              builder: (context, provider, _) {
-                final events = provider.getEventsForDay(widget.date);
-                if (events.isEmpty) {
-                  return const Center(child: Text("Agenda livre", style: TextStyle(color: Colors.black38)));
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade200),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset:const Offset(0,2))
-                        ]
-                      ),
-                      child: ListTile(
-                        visualDensity: VisualDensity.compact,
-                        dense: true,
-                        leading: Container(
-                          width: 3, 
-                          height: 24, 
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.secondary,
-                            borderRadius: BorderRadius.circular(2)
-                          ),
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                        ),
-                        title: Text(event.title, style: theme.textTheme.titleSmall?.copyWith(fontSize: 13)),
-                        subtitle: event.description.isNotEmpty 
-                          ? Text(event.description, style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)) 
-                          : null,
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete_outline, color: Colors.grey.shade400, size: 18),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () {
-                             if(event.id != null) provider.deleteEvent(event.id!);
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          
-          const Divider(height: 1),
-          // Compact Input Section
-          Container(
-            padding: const EdgeInsets.all(8.0),
-            color: Colors.grey.shade50,
-            child: Row(
-               children: [
-                 Expanded(
-                   flex: 4,
-                   child: SizedBox(
-                     height: 32,
-                     child: TextField(
-                       controller: titleController,
-                       style: const TextStyle(fontSize: 13),
-                       decoration: InputDecoration(
-                         hintText: "Título",
-                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
-                         filled: true,
-                         fillColor: Colors.white,
-                       ),
-                     ),
-                   ),
-                 ),
-                 const SizedBox(width: 8),
-                 Expanded(
-                   flex: 5,
-                   child: SizedBox(
-                     height: 32,
-                     child: TextField(
-                       controller: detailsController,
-                       style: const TextStyle(fontSize: 13),
-                       decoration: InputDecoration(
-                         hintText: "Detalhes...",
-                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide.none),
-                         filled: true,
-                         fillColor: Colors.white,
-                       ),
-                     ),
-                   ),
-                 ),
-                 const SizedBox(width: 8),
-                 SizedBox(
-                   width: 32, height: 32,
-                   child: IconButton(
-                     style: IconButton.styleFrom(
-                       backgroundColor: theme.colorScheme.primary,
-                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                       padding: EdgeInsets.zero,
-                     ),
-                     icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                     onPressed: () {
-                        if (titleController.text.isNotEmpty) {
-                          Provider.of<TaskProvider>(context, listen: false).addEvent(
-                            titleController.text,
-                            detailsController.text,
-                            widget.date,
-                          );
-                          titleController.clear();
-                          detailsController.clear();
-                        }
-                     },
-                   ),
-                 )
-               ],
-            ),
-          ),
-        ],
+      action: IconButton(
+        icon: Icon(Icons.add_circle, color: theme.colorScheme.primary, size: 20),
+        onPressed: () => _showAddEventDialog(context),
+        tooltip: "Novo Compromisso",
+        constraints: const BoxConstraints(),
+        padding: EdgeInsets.zero,
+      ),
+      child: Consumer<TaskProvider>(
+        builder: (context, provider, _) {
+          final events = provider.getEventsForDay(widget.date);
+          if (events.isEmpty) {
+            return const Center(child: Text("Agenda livre", style: TextStyle(color: Colors.black38)));
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset:const Offset(0,2))
+                  ]
+                ),
+                child: ListTile(
+                  visualDensity: VisualDensity.compact,
+                  dense: true,
+                  leading: Container(
+                    width: 3, 
+                    height: 24, 
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      borderRadius: BorderRadius.circular(2)
+                    ),
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                  title: Text(event.title, style: theme.textTheme.titleSmall?.copyWith(fontSize: 13)),
+                  subtitle: event.description.isNotEmpty 
+                    ? Text(event.description, style: theme.textTheme.bodySmall?.copyWith(fontSize: 11)) 
+                    : null,
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.grey.shade400, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                       if(event.id != null) provider.deleteEvent(event.id!);
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
+
+  Future<void> _showAddEventDialog(BuildContext context) async {
+    final titleController = TextEditingController();
+    final detailsController = TextEditingController();
+    
+    await showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const Text("Novo Compromisso"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+               controller: titleController,
+               autofocus: true,
+               decoration: const InputDecoration(labelText: "Título", hintText: "Reunião, Médico..."),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+               controller: detailsController,
+               decoration: const InputDecoration(labelText: "Detalhes (Opcional)", hintText: "Horário, Local..."),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () {
+               if(titleController.text.isNotEmpty) {
+                 Provider.of<TaskProvider>(context, listen: false).addEvent(
+                    titleController.text,
+                    detailsController.text,
+                    widget.date,
+                 );
+                 Navigator.pop(context);
+               }
+            }, 
+            child: const Text("Salvar")
+          )
+        ],
+      )
+    );
+  }
+
+  // DashboardSection Class (Re-declared for completeness inside replacement if needed, 
+  // but better to just replace the class DashboardSection if it's separate.)
+  // Wait, DashboardSection is at the bottom of the file. I need to make sure I don't delete it or duplicate it if I'm replacing "StartLine: 62".
+  // The file has 621 lines.
+  // I will END the replacement BEFORE DashboardSection class definition if possible, or include it.
+  // DashboardSection starts at line 549.
+  // My replacement above includes _buildAppointmentsSection which ends around line 546.
+  // I will try to target lines 62 to 547.
+
 }
 
 class DashboardSection extends StatelessWidget {

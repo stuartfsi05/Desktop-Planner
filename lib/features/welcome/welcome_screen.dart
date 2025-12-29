@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'task_provider.dart';
+import 'package:amanda_planner/features/planner/providers/task_provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final VoidCallback onDismiss;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'task_provider.dart';
+import 'package:amanda_planner/features/planner/providers/task_provider.dart';
 
 class VerticalWeeklyView extends StatefulWidget {
   final int weekIndex; // 0-4
@@ -164,15 +164,15 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                   flex: 3,
                   child: Row(
                     children: [
-                      // Distinct Pastel Colors (Stronger)
-                      Expanded(child: _buildDayColumn(days[0], const Color(0xFFFFD1DC), "Segunda", taskProvider)), // Pastel Pink
-                      Expanded(child: _buildDayColumn(days[1], const Color(0xFFFFE5B4), "Terça", taskProvider)), // Peach
-                      Expanded(child: _buildDayColumn(days[2], const Color(0xFFFFFFAC), "Quarta", taskProvider)), // Pastel Yellow
+                      // Distinct Pastel Colors (Requested Palette)
+                      Expanded(child: _buildDayColumn(days[0], const Color(0xFFFADADA), "Segunda", taskProvider)), // Pink
+                      Expanded(child: _buildDayColumn(days[1], const Color(0xFFD6E6BE), "Terça", taskProvider)), // Green
+                      Expanded(child: _buildDayColumn(days[2], const Color(0xFFAECCCC), "Quarta", taskProvider)), // Teal
                     ],
                   ),
                 ),
                 // Editable Note (Transparent bg, colored container)
-                 _buildNoteSection(_leftNoteController, const Color(0xFFFFF9C4), "Notas da Semana", 'LEFT'),
+                 _buildNoteSection(_leftNoteController, const Color(0xFFDAD8D3), "Notas da Semana", 'LEFT'), // Grey
               ],
             ),
           ),
@@ -188,14 +188,14 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                   flex: 3,
                   child: Row(
                     children: [
-                      Expanded(child: _buildDayColumn(days[3], const Color(0xFFC1E1C1), "Quinta", taskProvider)), // Pastel Green
-                      Expanded(child: _buildDayColumn(days[4], const Color(0xFFAEC6CF), "Sexta", taskProvider)), // Pastel Blue
+                      Expanded(child: _buildDayColumn(days[3], const Color(0xFFEDB1B1), "Quinta", taskProvider)), // Salmon
+                      Expanded(child: _buildDayColumn(days[4], const Color(0xFFECE9AC), "Sexta", taskProvider)), // Yellow
                       Expanded(
                         child: Column(
                           children: [
-                             Expanded(child: _buildDayColumn(days[5], const Color(0xFFE6E6FA), "Sábado", taskProvider)), // Lavender
+                             Expanded(child: _buildDayColumn(days[5], const Color(0xFFC8B1C0), "Sábado", taskProvider)), // Purple/Grey
                              const SizedBox(height: 8),
-                             Expanded(child: _buildDayColumn(days[6], const Color(0xFFE6E6FA), "Domingo", taskProvider)),
+                             Expanded(child: _buildDayColumn(days[6], const Color(0xFFC8B1C0), "Domingo", taskProvider)),
                           ],
                         ),
                       ),
@@ -203,7 +203,7 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                   ),
                 ),
                 // Editable Note
-                 _buildNoteSection(_rightNoteController, const Color(0xFFE1F5FE), "Notas da Semana", 'RIGHT'),
+                 _buildNoteSection(_rightNoteController, const Color(0xFFDAD8D3), "Notas da Semana", 'RIGHT'), // Grey
               ],
             ),
           ),

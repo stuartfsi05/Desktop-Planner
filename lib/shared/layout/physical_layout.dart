@@ -29,11 +29,11 @@ class PhysicalPlannerLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Premium Palette
-    final deskColor = const Color(0xFF1F2937); // Professional Dark Desk (Gray 900)
-    final binderColor = const Color(0xFF4C1D95); // Deep Violet Leather
-    final paperColor = const Color(0xFFF9FAFB); // Cool White Paper
-    final paperShadow = Colors.black.withOpacity(0.08);
+    // New Palette
+    final deskColor = const Color(0xFFDAD8D3); // Warm Grey Background
+    final binderColor = const Color(0xFFEA9DAB); // Pink Binder
+    final paperColor = const Color(0xFFFAFAFA); // White Paper
+    final paperShadow = Colors.black.withOpacity(0.1);
 
     return Scaffold(
       backgroundColor: deskColor,
@@ -47,18 +47,19 @@ class PhysicalPlannerLayout extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 40,
-                offset: const Offset(0, 20),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
               ),
             ],
+            // Subtle gradient for binder texture
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF5B21B6), // Lighter Violet
-                Color(0xFF4C1D95), // Deep Violet
-                Color(0xFF2E1065), // Darkest Violet
+                Color(0xFFF2B5C0), // Lighter Pink
+                Color(0xFFEA9DAB), // Base Pink
+                Color(0xFFD68A98), // Darker Pink
               ],
             )
           ),
@@ -71,10 +72,14 @@ class PhysicalPlannerLayout extends StatelessWidget {
                   // 2. Binder Left Spine (Narrower for realism)
                   Container(
                     width: 30,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       border: Border(
-                        right: BorderSide(color: Colors.black12, width: 1),
+                        right: BorderSide(color: Colors.black.withOpacity(0.1), width: 1),
                       ),
+                      gradient: LinearGradient(
+                         begin: Alignment.centerLeft, end: Alignment.centerRight,
+                         colors: [Colors.black12, Colors.transparent]
+                      )
                     ),
                   ),
 
@@ -85,7 +90,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
                         color: paperColor,
                         // borderRadius: BorderRadius.zero, 
                         boxShadow: [
-                          BoxShadow(color: paperShadow, blurRadius: 10, offset: const Offset(4, 0)),
+                          BoxShadow(color: paperShadow, blurRadius: 8, offset: const Offset(2, 0)),
                         ],
                       ),
                       child: ClipRRect(
@@ -103,16 +108,22 @@ class PhysicalPlannerLayout extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            
+                            // LEFT TABS (Weeks) - Inside the paper?
+                            // User request: "Deixar as abas da lateral direitas coladas no quadro branco"
+                            // Left tabs are internal navigation. Let's keep them as is or adjust if requested.
+                            // Assuming "Abas da lateral direita" refers to Months.
+                            
                             // Content with padding for tabs
                             Padding(
-                              padding: EdgeInsets.only(left: showLeftTabs ? 70.0 : 30.0, top: 50.0, right: 20, bottom: 20),
+                              padding: EdgeInsets.only(left: showLeftTabs ? 60.0 : 30.0, top: 80.0, right: 30, bottom: 20),
                               child: child,
                             ),
                             
                             // NAVIGATION BUTTONS (Top Left)
                             if (onBack != null || onForward != null)
                             Positioned(
-                              left: showLeftTabs ? 75 : 35,
+                              left: showLeftTabs ? 65 : 35,
                               top: 16, 
                               child: Row(
                                 children: [
@@ -123,13 +134,13 @@ class PhysicalPlannerLayout extends StatelessWidget {
                               ),
                             ),
 
-                            // LEFT TABS (Weeks) - Inside the paper
+                            // LEFT TABS (Weeks)
                             if (showLeftTabs)
                               Positioned(
                                 left: 0,
                                 top: 120, // Align with calendar rows
                                 bottom: 80,
-                                width: 60, 
+                                width: 50, 
                                 child: Column(
                                    mainAxisAlignment: MainAxisAlignment.center,
                                    children: _buildWeekTabs(context),
@@ -141,21 +152,27 @@ class PhysicalPlannerLayout extends StatelessWidget {
                     ),
                   ),
 
-                  // 4. Right Tabs (Months)
+                  // 4. Right Tabs (Months) - "Coladas no quadro branco"
+                  // We remove the SizedBox width constraint or ensure the tabs fill it completely without margin
                   SizedBox(
                     width: 50,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: _buildMonthTabs(context),
+                      mainAxisAlignment: MainAxisAlignment.center, // Center vertically with margin
+                      crossAxisAlignment: CrossAxisAlignment.start, // Align to left (touching paper)
+                      children: [
+                         const SizedBox(height: 40), // Top margin "binder style"
+                         Expanded(child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: _buildMonthTabs(context),
+                         )),
+                         const SizedBox(height: 40), // Bottom margin
+                      ],
                     ),
                   ),
                 ],
               ),
               
               // 5. SPIRAL BINDING OVERLAY
-              // Positioned over the seam. Spine is 30px.
-              // Spiral widget is 60px wide. Center is 30px.
-              // To align center (30) with seam (30), left must be 0 relative to the Stack.
               Positioned(
                 left: 0, 
                 top: 0,
@@ -178,27 +195,31 @@ class PhysicalPlannerLayout extends StatelessWidget {
 
   Widget _buildSpiralRing() {
     return CustomPaint(
-      size: const Size(60, 45), // Slightly taller for roundness
+      size: const Size(60, 45), 
       painter: _SpiralPainter(),
     );
   }
-
-
-
-  // ... (keep _buildMonthTabs, _buildWeekTabs, _buildTab, _buildNavButton) ...
-  // Need to make sure I don't delete them. I will copy them back in the ReplacementContent?
-  // Or I can use StartLine/EndLine carefully.
-  // The current tool call replaces everything from `Widget build` down to end of file roughly (Line 31 to 321).
-  // Check the line range again.
-  // Lines 200-321 contain the helper methods. I should include them or just target the build method + _buildRing replacement.
-  
-  // Re-writing helper methods to be safe:
 
   // --- MONTH TABS (RIGHT) ---
   List<Widget> _buildMonthTabs(BuildContext context) {
     final months = [
       'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
       'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+    ];
+    // Specific Palette for Months
+    final colors = [
+       const Color(0xFFFADADA), // Pink
+       const Color(0xFFD6E6BE), // Green
+       const Color(0xFFAECCCC), // Teal
+       const Color(0xFFEDB1B1), // Salmon
+       const Color(0xFFECE9AC), // Yellow
+       const Color(0xFFC8B1C0), // Purple/Grey
+       const Color(0xFFFADADA), // Repeat...
+       const Color(0xFFD6E6BE),
+       const Color(0xFFAECCCC),
+       const Color(0xFFEDB1B1),
+       const Color(0xFFECE9AC),
+       const Color(0xFFC8B1C0),
     ];
     
     return List.generate(12, (index) {
@@ -208,7 +229,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
           context, 
           index, 
           months[index], 
-          isSelected ? const Color(0xFFF472B6) : const Color(0xFFDDD6FE), 
+          colors[index], 
           isLeft: false, 
           isSelected: isSelected
         ),
@@ -219,25 +240,28 @@ class PhysicalPlannerLayout extends StatelessWidget {
   // --- WEEK TABS (LEFT) ---
   List<Widget> _buildWeekTabs(BuildContext context) {
       final weeks = ['S1', 'S2', 'S3', 'S4', 'S5'];
+      // Weeks colors: reusing month palette or simple? 
+      // User request only specified RIGHT tabs palette. Let's keep weeks simple or match.
+      // Let's match the theme.
       
       return List.generate(5, (index) {
           final isSelected = selectedWeekIndex == index;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
+          return Expanded(
             child: _buildTab(
               context, 
               index, 
               weeks[index], 
-              isSelected ? const Color(0xFFF472B6) : const Color(0xFFBFDBFE), 
+              isSelected ? const Color(0xFF24555D) : const Color(0xFFDAD8D3), 
               isLeft: true, 
               isSelected: isSelected, 
-              onTap: () => onWeekSelected(index)
+              onTap: () => onWeekSelected(index),
+              textColor: isSelected ? Colors.white : Colors.black87
             ),
           );
       });
   }
 
-  Widget _buildTab(BuildContext context, int index, String label, Color color, {required bool isLeft, required bool isSelected, VoidCallback? onTap}) {
+  Widget _buildTab(BuildContext context, int index, String label, Color color, {required bool isLeft, required bool isSelected, VoidCallback? onTap, Color? textColor}) {
     final tapHandler = onTap ?? () => onTabSelected(index);
 
     return GestureDetector(
@@ -246,39 +270,42 @@ class PhysicalPlannerLayout extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
         margin: EdgeInsets.only(
-          bottom: 2, 
-          left: isLeft ? (isSelected ? 12 : 0) : (isSelected ? 0 : 8), // Pop out direction
-          right: isLeft ? (isSelected ? 0 : 8) : 2,
+          bottom: 1, // Tiny gap for separate tabs feel
+          left: isLeft ? 0 : 0, // No margin, flush with paper
+          right: isLeft ? 0 : (isSelected ? 0 : 4), // Selected tabs stick out more? Or just flush.
         ), 
-        width: 40,
+        // If right tab:
+        // Flush left (touching paper). 
+        width: 50,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.only(
             topLeft: isLeft ? const Radius.circular(8) : Radius.zero,
             bottomLeft: isLeft ? const Radius.circular(8) : Radius.zero,
-            topRight: isLeft ? Radius.zero : const Radius.circular(8),
-            bottomRight: isLeft ? Radius.zero : const Radius.circular(8),
+            topRight: isLeft ? Radius.zero : const Radius.circular(10), // Rounded outer edge
+            bottomRight: isLeft ? Radius.zero : const Radius.circular(10),
           ),
           boxShadow: [
             if (isSelected)
             BoxShadow(
-              color: color.withOpacity(0.4),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(2, 2),
             ),
           ],
         ),
-        child: Center(
-          child: RotatedBox(
-            quarterTurns: isLeft ? 0 : 0, 
-            child: Text(
-              label.toUpperCase(),
-              textAlign: TextAlign.center,
-              style: GoogleFonts.lato(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.black54,
-                fontSize: 10,
-              ),
+        alignment: Alignment.center,
+        child: RotatedBox(
+          quarterTurns: 0, // Keep text horizontal or vertical? Usually abbreviated months are readable horizontal if short.
+          // Or rotate -1 for vertical tabs.
+          // Code had RotatedBox but quarterTurns 0.
+          child: Text(
+            label.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.lato(
+              fontWeight: FontWeight.bold,
+              color: textColor ?? const Color(0xFF24555D), // Dark Teal Text
+              fontSize: 10,
             ),
           ),
         ),
@@ -297,7 +324,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: Colors.grey.shade300),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -306,7 +333,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
               )
             ]
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF4B5563)),
+          child: Icon(icon, size: 18, color: const Color(0xFF24555D)),
         ),
       ),
     );

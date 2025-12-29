@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
+import 'package:amanda_planner/core/database/database_helper.dart';
 
 class Task {
   int? id;

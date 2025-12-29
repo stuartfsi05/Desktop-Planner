@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'task_provider.dart';
+import 'package:amanda_planner/features/planner/providers/task_provider.dart';
 
 class MonthlyCalendar extends StatelessWidget {
   final int monthIndex; // 0 = Jan, 11 = Dec
