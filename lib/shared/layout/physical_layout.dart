@@ -166,7 +166,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
                 left: 0, 
                 top: 0,
                 bottom: 0,
-                width: 60, 
+                width: 80, // Expanded width for wider loops
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(
@@ -184,7 +184,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
 
   Widget _buildSpiralRing() {
     return CustomPaint(
-      size: const Size(60, 45), 
+      size: const Size(80, 45), // Expanded size for wider loops
       painter: _SpiralPainter(),
     );
   }
@@ -332,100 +332,104 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // Save state for clipping
+    // Save state for clipping Layer 4
     canvas.save();
 
-    // Move clipping to the left (X=8) to allow the ring to be visible over the cover
+    // Layer 4 Boundary: Clipping X=8 (Simulates emergence from cover)
     canvas.clipRect(Rect.fromLTWH(8, -size.height, size.width - 8, size.height * 2));
 
-    // 1. Hole Settings
-    final holeCenter = Offset(size.width - 12, size.height / 2);
-    final holeRadius = 4.0;
+    // --- CAMADA 1: Os Furos no Papel (Punch Holes) ---
+    final holeCenterX = size.width - 15.0; // Fixed x: ~65 in an 80px canvas
+    final holeCenterY = size.height / 2;
+    final holeRadius = 4.5;
     
-    // 2. Realistic "Punched" Hole
+    // Internal Hole Shadow (Depth)
     final holePaint = Paint()
-      ..color = const Color(0xFF2D2D2D) // Dark internal hole
+      ..color = const Color(0xFF1F1F1F) 
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(holeCenter, holeRadius, holePaint);
+    canvas.drawCircle(Offset(holeCenterX, holeCenterY), holeRadius, holePaint);
 
-    // Paper thickness highlight (white rim at the bottom)
-    final rimPaint = Paint()
-      ..color = Colors.white.withOpacity(0.6)
+    // Paper Thickness Highlight (Bottom rim)
+    final holeRimPaint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     canvas.drawArc(
-      Rect.fromCircle(center: holeCenter, radius: holeRadius),
-      0.2, 2.8, 
+      Rect.fromCircle(center: Offset(holeCenterX, holeCenterY), radius: holeRadius),
+      0.2, 2.7, // Bottom arc
       false,
-      rimPaint,
+      holeRimPaint,
     );
 
-    // 3. Drop Shadow on Paper (Drawn BEFORE the metal)
+    // --- CAMADA 2: As Sombras Projetadas (Drop Shadows) ---
+    // Trajectory constants for shadow and metal
+    final start = Offset(0, size.height * 0.9);
+    final end = Offset(holeCenterX, holeCenterY);
+    final cp1 = Offset(size.width * 0.1, -size.height * 0.7);
+    final cp2 = Offset(size.width * 1.1, -size.height * 0.3);
+
     final shadowPath = Path();
-    shadowPath.moveTo(size.width * 0.45, size.height * 0.4);
-    shadowPath.quadraticBezierTo(
-      size.width * 0.85, 0, 
-      holeCenter.dx + 1.5, holeCenter.dy + 1.5
+    shadowPath.moveTo(start.dx + 2, start.dy + 3);
+    shadowPath.cubicTo(
+      cp1.dx + 2, cp1.dy + 3, 
+      cp2.dx + 2, cp2.dy + 3, 
+      end.dx + 1, end.dy + 1
     );
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.18)
+      ..color = Colors.black.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
     canvas.drawPath(shadowPath, shadowPaint);
 
-    // 4. Rose Gold Cylindrical Wire
-    final path = Path();
-    // Start deep behind the cover
-    final startPoint = Offset(-5, size.height * 0.85); 
-    final endPoint = holeCenter;
-    
-    // Wider elliptical path to cover more of the spine area
-    final cp1 = Offset(size.width * -0.1, -size.height * 0.6); 
-    final cp2 = Offset(size.width * 1.1, -size.height * 0.3);
-    path.moveTo(startPoint.dx, startPoint.dy);
-    path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, endPoint.dx, endPoint.dy);
+    // --- CAMADA 3: A Espiral Metálica (Rose Gold Coil) ---
+    final coilPath = Path();
+    coilPath.moveTo(start.dx, start.dy);
+    coilPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
 
-    // High-Contrast Metallic Gradient (Rose Gold)
-    final gradient = LinearGradient(
+    // Transversal Metallic Gradient (Cylindrical Lighting)
+    final roseGoldBase = const Color(0xFFB76E79);
+    final darkCopper = const Color(0xFF633A3F);
+    final specularWhite = const Color(0xFFFFFFFF);
+
+    final metalGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        const Color(0xFF5E3A3A),
-        const Color(0xFF8B5A5A),
-        const Color(0xFFFFD1D1),
-        const Color(0xFFE5989B),
-        const Color(0xFF8B5A5A),
-        const Color(0xFF5E3A3A),
+        darkCopper,
+        roseGoldBase,
+        specularWhite.withOpacity(0.9),
+        roseGoldBase,
+        darkCopper,
       ],
-      stops: const [0.0, 0.15, 0.45, 0.7, 0.85, 1.0],
+      stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
     );
 
-    final wirePaint = Paint()
-      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+    final metalPaint = Paint()
+      ..shader = metalGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.8
+      ..strokeWidth = 5.5
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawPath(path, wirePaint);
+    canvas.drawPath(coilPath, metalPaint);
 
-    // 5. Specular Reflection
-    final shinePaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+    // Final Specular Pop (Upper shine)
+    final popPaint = Paint()
+      ..color = Colors.white.withOpacity(0.35)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
 
-    final shinePath = Path();
-    shinePath.moveTo(size.width * 0.15, size.height * 0.2); // Shine starts earlier
-    shinePath.quadraticBezierTo(
-      size.width * 0.5, -size.height * 0.25, 
-      size.width * 0.85, size.height * 0.15
+    final popPath = Path();
+    popPath.moveTo(size.width * 0.2, size.height * 0.3);
+    popPath.quadraticBezierTo(
+      size.width * 0.55, -size.height * 0.35, 
+      size.width * 0.9, size.height * 0.25
     );
-    canvas.drawPath(shinePath, shinePaint);
+    canvas.drawPath(popPath, popPaint);
 
-    // Restore state after clipping
+    // Layer 4: Restore State (Clipping ends)
     canvas.restore();
   }
 
