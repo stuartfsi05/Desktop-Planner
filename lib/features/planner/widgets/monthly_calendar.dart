@@ -112,7 +112,7 @@ class MonthlyCalendar extends StatelessWidget {
       const Color(0xFFAECCCC),
       const Color(0xFFEDB1B1),
       const Color(0xFFECE9AC),
-      const Color(0xFFC8B1C0),
+      const Color(0xFFCFB0DE),
     ][weekIndex % 6];
 
     // Check if this week has ANY days in the current month

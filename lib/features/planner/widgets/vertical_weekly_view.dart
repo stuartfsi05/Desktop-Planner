@@ -275,7 +275,7 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                             Expanded(
                               child: _buildDayColumn(
                                 days[5],
-                                const Color(0xFFC8B1C0),
+                                const Color(0xFFCFB0DE),
                                 "Sábado",
                                 taskProvider,
                               ),
@@ -284,7 +284,7 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                             Expanded(
                               child: _buildDayColumn(
                                 days[6],
-                                const Color(0xFFC8B1C0),
+                                const Color(0xFFCFB0DE),
                                 "Domingo",
                                 taskProvider,
                               ),

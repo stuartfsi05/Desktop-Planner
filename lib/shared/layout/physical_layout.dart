@@ -203,13 +203,13 @@ class PhysicalPlannerLayout extends StatelessWidget {
       Color(0xFFAECCCC),
       Color(0xFFEDB1B1),
       Color(0xFFECE9AC),
-      Color(0xFFC8B1C0),
+      Color(0xFFCFB0DE),
       Color(0xFFFADADA),
       Color(0xFFD6E6BE),
       Color(0xFFAECCCC),
       Color(0xFFEDB1B1),
       Color(0xFFECE9AC),
-      Color(0xFFC8B1C0),
+      Color(0xFFCFB0DE),
     ];
 
     return List.generate(12, (index) {
