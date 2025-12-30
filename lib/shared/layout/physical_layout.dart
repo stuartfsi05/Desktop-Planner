@@ -327,72 +327,71 @@ class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // --- GEOMETRIC CONSTANTS (ALIGNED WITH LAYOUT) ---
-    // Binder edge starts at global X=24. Overlay starts at global X=10.
     const binderEdgeLocal = 14.0; 
-    // Spine space is 15px. Paper starts at global X=39.
     const paperEdgeLocal = 29.0;
     
     // 1. "TUCK-BEHIND" CLIPPING
-    // We want the spiral VISIBLE over the desk (X < 14) and over the paper (X > 29).
-    // We hide it when it's over the pink spine (14 < X < 29) to create the wrap-around look.
+    // Refined mask for absolute pixel-perfect transition at the leather edge
     canvas.save();
     final visiblePath = Path()
-      ..addRect(Rect.fromLTWH(-50, -100, binderEdgeLocal + 50, size.height + 200)) // Desk Area
-      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width, size.height + 200)); // Paper Area
+      ..addRect(Rect.fromLTWH(-100, -100, binderEdgeLocal + 100, size.height + 200)) 
+      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width + 100, size.height + 200));
     canvas.clipPath(visiblePath);
 
     // --- CAMADA 1: Furo Físico (Punch Hole) ---
-    final holeX = 36.0; // Slightly further into the paper
-    final holeY = size.height * 0.35; 
-    final holeRadius = 4.0; 
+    // Repositioned to match the realistic "binding margin" of the reference
+    final holeX = 35.0; 
+    final holeY = size.height * 0.22; // Higher exit for better circularity
+    final holeRadius = 3.6; 
 
     final holePaint = Paint()
-      ..color = const Color(0xFF151515)
+      ..color = const Color(0xFF111111)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(holeX, holeY), holeRadius, holePaint);
 
     final holeRim = Paint()
-      ..color = Colors.white.withOpacity(0.25)
+      ..color = Colors.white.withOpacity(0.2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 0.8;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- GEOMETRIA DA ESPIRAL (DESCENDENTE & WRAP) ---
+    // --- GEOMETRIA DA ESPIRAL (REF: CIRCULAR & SYMMETRIC) ---
     final start = Offset(holeX, holeY);
-    // The path "loops" far to the left to complete the 3D circle behind the scenes.
-    final end = Offset(-15, size.height * 0.85); 
+    // Descending more smoothly into the next loop's perspective
+    final end = Offset(-18, size.height * 0.9); 
     
-    // Refined Bézier for a fluid, high-tension spring arc
-    final cp1 = Offset(size.width * 1.8, -size.height * 0.45); 
-    final cp2 = Offset(size.width * -1.6, size.height * 0.15); 
+    // Control points tuned for a symmetric, high-fidelity circular arc
+    // cp1 creates the "outwards" tension from the hole
+    final cp1 = Offset(size.width * 1.3, -size.height * 0.35); 
+    // cp2 creates the wide, sweeping wrap around the binder spine
+    final cp2 = Offset(size.width * -2.4, size.height * 0.1); 
 
     final coilPath = Path();
     coilPath.moveTo(start.dx, start.dy);
     coilPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
 
     // --- CAMADA 2: Sombra Suave (Drop Shadow) ---
-    // Higher blur and offset for 3D depth
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 8.5 
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.5);
+      ..strokeWidth = 8.0 
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.0);
     
     final shadowPath = Path();
-    shadowPath.moveTo(start.dx + 4, start.dy + 5);
-    shadowPath.cubicTo(cp1.dx + 4, cp1.dy + 5, cp2.dx + 4, cp2.dy + 5, end.dx + 4, end.dy + 5);
+    shadowPath.moveTo(start.dx + 4, start.dy + 4);
+    shadowPath.cubicTo(cp1.dx + 4, cp1.dy + 4, cp2.dx + 4, cp2.dy + 4, end.dx + 4, end.dy + 4);
     canvas.drawPath(shadowPath, shadowPaint);
 
-    // --- CAMADA 3: Fio Metálico (High-Contrast Champagne Gold) ---
-    const champagneGold = Color(0xFFFFF1EB);   // Brighter specular
+    // --- CAMADA 3: Fio Metálico (High-Fidelity Champagne Gold) ---
+    const champagneGold = Color(0xFFFFF7F2);   
     const roseGoldMid = Color(0xFFE4B2A3);     
-    const roseGoldShadow = Color(0xFF91655D);  // Deeper shadow
+    const roseGoldShadow = Color(0xFF8B5E57);  
 
     final metalGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [ roseGoldShadow, roseGoldMid, champagneGold, roseGoldMid, roseGoldShadow ],
-      stops: const [0.0, 0.2, 0.45, 0.75, 1.0], // Sharper highlights
+      stops: const [0.0, 0.25, 0.45, 0.75, 1.0],
     );
 
     final metalPaint = Paint()
@@ -403,16 +402,16 @@ class _SpiralPainter extends CustomPainter {
 
     canvas.drawPath(coilPath, metalPaint);
 
-    // --- CAMADA 4: Brilho de Borda (Rim Light) ---
+    // --- CAMADA 4: Brilho de Cume (Rim Highlight) ---
     final popPaint = Paint()
-      ..color = Colors.white.withOpacity(0.6)
+      ..color = Colors.white.withOpacity(0.65)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2 
+      ..strokeWidth = 2.0 
       ..strokeCap = StrokeCap.round;
 
     final popPath = Path();
-    popPath.moveTo(size.width * 0.05, size.height * 0.1);
-    popPath.quadraticBezierTo(size.width * 0.5, -size.height * 0.45, size.width * 1.1, size.height * 0.25);
+    popPath.moveTo(size.width * -0.05, size.height * 0.05);
+    popPath.quadraticBezierTo(size.width * 0.4, -size.height * 0.4, size.width * 1.1, size.height * 0.2);
     canvas.drawPath(popPath, popPaint);
 
     canvas.restore();
