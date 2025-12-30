@@ -69,19 +69,8 @@ class PhysicalPlannerLayout extends StatelessWidget {
               // MAIN ROW CONTENT
               Row(
                 children: [
-                  // 2. Binder Left Spine (Narrower for realism)
-                  Container(
-                    width: 30,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        right: BorderSide(color: Colors.black.withOpacity(0.1), width: 1),
-                      ),
-                      gradient: LinearGradient(
-                         begin: Alignment.centerLeft, end: Alignment.centerRight,
-                         colors: [Colors.black12, Colors.transparent]
-                      )
-                    ),
-                  ),
+                  // 2. Padding/Space for Spine (Visual logic moved to Occlusion layer)
+                  const SizedBox(width: 30),
 
                   // 3. Main Paper Area
                   Expanded(
@@ -343,91 +332,101 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    // Save state for clipping
+    canvas.save();
+
+    // Move clipping to the left (X=8) to allow the ring to be visible over the cover
+    canvas.clipRect(Rect.fromLTWH(8, -size.height, size.width - 8, size.height * 2));
+
     // 1. Hole Settings
     final holeCenter = Offset(size.width - 12, size.height / 2);
     final holeRadius = 4.0;
     
     // 2. Realistic "Punched" Hole
     final holePaint = Paint()
-      ..color = const Color(0xFF333333) // Dark internal hole
+      ..color = const Color(0xFF2D2D2D) // Dark internal hole
       ..style = PaintingStyle.fill;
     canvas.drawCircle(holeCenter, holeRadius, holePaint);
 
     // Paper thickness highlight (white rim at the bottom)
     final rimPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
+      ..color = Colors.white.withOpacity(0.6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 1.2;
     canvas.drawArc(
       Rect.fromCircle(center: holeCenter, radius: holeRadius),
-      0, 3.14, // Bottom half arc
+      0.2, 2.8, 
       false,
       rimPaint,
     );
 
     // 3. Drop Shadow on Paper (Drawn BEFORE the metal)
     final shadowPath = Path();
-    shadowPath.moveTo(size.width * 0.4, size.height * 0.3);
+    shadowPath.moveTo(size.width * 0.45, size.height * 0.4);
     shadowPath.quadraticBezierTo(
-      size.width * 0.8, -size.height * 0.1, 
-      holeCenter.dx + 2, holeCenter.dy + 2
+      size.width * 0.85, 0, 
+      holeCenter.dx + 1.5, holeCenter.dy + 1.5
     );
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.15)
+      ..color = Colors.black.withOpacity(0.18)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      ..strokeWidth = 5.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
     canvas.drawPath(shadowPath, shadowPaint);
 
     // 4. Rose Gold Cylindrical Wire
     final path = Path();
-    final startPoint = Offset(2, size.height * 0.8);
+    // Start deep behind the cover
+    final startPoint = Offset(-5, size.height * 0.85); 
     final endPoint = holeCenter;
     
-    // Smooth geometric arc
-    final cp1 = Offset(size.width * 0.1, -size.height * 0.5); 
-    final cp2 = Offset(size.width * 0.9, -size.height * 0.2);
+    // Wider elliptical path to cover more of the spine area
+    final cp1 = Offset(size.width * -0.1, -size.height * 0.6); 
+    final cp2 = Offset(size.width * 1.1, -size.height * 0.3);
     path.moveTo(startPoint.dx, startPoint.dy);
     path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, endPoint.dx, endPoint.dy);
 
-    // Transversal Metallic Gradient (Cylindrical effect)
-    // Runs slightly diagonal/transversal to the stroke
+    // High-Contrast Metallic Gradient (Rose Gold)
     final gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        const Color(0xFF5E3A3A), // Shadow side
-        const Color(0xFF8B5A5A), // Base
-        const Color(0xFFFADADD), // High Gloss Specular
-        const Color(0xFF8B5A5A), // Base
-        const Color(0xFF5E3A3A), // Shadow side
+        const Color(0xFF5E3A3A),
+        const Color(0xFF8B5A5A),
+        const Color(0xFFFFD1D1),
+        const Color(0xFFE5989B),
+        const Color(0xFF8B5A5A),
+        const Color(0xFF5E3A3A),
       ],
-      stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+      stops: const [0.0, 0.15, 0.45, 0.7, 0.85, 1.0],
     );
 
     final wirePaint = Paint()
       ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.5
+      ..strokeWidth = 4.8
       ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(path, wirePaint);
 
-    // 5. Specular Reflection (Sharp pop)
+    // 5. Specular Reflection
     final shinePaint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
+      ..color = Colors.white.withOpacity(0.4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 1.2
       ..strokeCap = StrokeCap.round;
 
     final shinePath = Path();
-    shinePath.moveTo(size.width * 0.25, size.height * 0.05);
+    shinePath.moveTo(size.width * 0.15, size.height * 0.2); // Shine starts earlier
     shinePath.quadraticBezierTo(
-      size.width * 0.5, -size.height * 0.15, 
-      size.width * 0.75, size.height * 0.1
+      size.width * 0.5, -size.height * 0.25, 
+      size.width * 0.85, size.height * 0.15
     );
     canvas.drawPath(shinePath, shinePaint);
+
+    // Restore state after clipping
+    canvas.restore();
   }
 
   @override
