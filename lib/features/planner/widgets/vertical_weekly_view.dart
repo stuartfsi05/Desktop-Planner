@@ -284,9 +284,13 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
                   InkWell(
                     onTap: () => _showAddTaskDialog(date),
                     borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Icon(Icons.add_circle, size: 20, color: Colors.grey.shade400),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 1.2),
+                      ),
+                      child: const Icon(Icons.add, size: 14, color: Colors.black87),
                     ),
                   )
                 ],

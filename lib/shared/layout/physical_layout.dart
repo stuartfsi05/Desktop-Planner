@@ -123,7 +123,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
                             // NAVIGATION BUTTONS (Top Left)
                             if (onBack != null || onForward != null)
                             Positioned(
-                              left: showLeftTabs ? 65 : 35,
+                              left: showLeftTabs ? 65 : 34,
                               top: 16, 
                               child: Row(
                                 children: [
@@ -320,7 +320,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
@@ -333,7 +333,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
               )
             ]
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF24555D)),
+          child: Icon(icon, size: 15, color: const Color(0xFF24555D)),
         ),
       ),
     );
@@ -343,95 +343,90 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // Coordinate reference:
-    // x=0 is the left edge of the binder cover.
-    // x=30 is the edge of the paper (seam).
-    // range x=30 to 60 is on the paper.
-    
-    // 1. Hole Shadow (The hole in the paper)
+    // 1. Hole Settings
     final holeCenter = Offset(size.width - 12, size.height / 2);
-    final holeRadius = 3.5;
+    final holeRadius = 4.0;
     
-    // Draw hole depth (dark circle)
+    // 2. Realistic "Punched" Hole
     final holePaint = Paint()
-      ..color = const Color(0xFF1A1A1A) 
+      ..color = const Color(0xFF333333) // Dark internal hole
       ..style = PaintingStyle.fill;
-      
-    // Draw a small "rim" highlight for 3D effect on the hole
-    final rimPaint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-
     canvas.drawCircle(holeCenter, holeRadius, holePaint);
-    canvas.drawCircle(holeCenter, holeRadius, rimPaint);
 
-    // 2. Wire Path - Rounder Loop
+    // Paper thickness highlight (white rim at the bottom)
+    final rimPaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawArc(
+      Rect.fromCircle(center: holeCenter, radius: holeRadius),
+      0, 3.14, // Bottom half arc
+      false,
+      rimPaint,
+    );
+
+    // 3. Drop Shadow on Paper (Drawn BEFORE the metal)
+    final shadowPath = Path();
+    shadowPath.moveTo(size.width * 0.4, size.height * 0.3);
+    shadowPath.quadraticBezierTo(
+      size.width * 0.8, -size.height * 0.1, 
+      holeCenter.dx + 2, holeCenter.dy + 2
+    );
+
+    final shadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawPath(shadowPath, shadowPaint);
+
+    // 4. Rose Gold Cylindrical Wire
     final path = Path();
-    
-    // Start tucked behind the spine (x=2 to look like it's coming from depth)
-    final startPoint = Offset(2, size.height * 0.75);
+    final startPoint = Offset(2, size.height * 0.8);
     final endPoint = holeCenter;
     
-    // Control points for a more circular/round arc
-    // CP1 is high and left. CP2 is high and right near the hole.
-    final cp1 = Offset(size.width * 0.1, -size.height * 0.4); 
+    // Smooth geometric arc
+    final cp1 = Offset(size.width * 0.1, -size.height * 0.5); 
     final cp2 = Offset(size.width * 0.9, -size.height * 0.2);
-
     path.moveTo(startPoint.dx, startPoint.dy);
     path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, endPoint.dx, endPoint.dy);
 
-    // 3. Shadow of the wire on the paper
-    final shadowPath = Path();
-    // Shadow starts roughly at the seam (x=30)
-    shadowPath.moveTo(25, size.height * 0.85); 
-    shadowPath.cubicTo(
-       size.width * 0.5, size.height * 0.2, 
-       size.width * 0.85, size.height * 0.5, 
-       endPoint.dx + 3, endPoint.dy + 3
-    );
-    
-    final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.5
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
-      
-    canvas.drawPath(shadowPath, shadowPaint);
-
-    // 4. The Gold Wire with enhanced metallic gradient
-    final gradient = const LinearGradient(
+    // Transversal Metallic Gradient (Cylindrical effect)
+    // Runs slightly diagonal/transversal to the stroke
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
       colors: [
-         Color(0xFF78350F), // Dark Bronze (Start - tucked behind)
-         Color(0xFFB45309), // Copper
-         Color(0xFFFDE68A), // Highlight Gold (Brightest top)
-         Color(0xFFF59E0B), // Standard Gold
-         Color(0xFFB45309), // Copper
-         Color(0xFF78350F), // Dark (Entering hole)
+        const Color(0xFF5E3A3A), // Shadow side
+        const Color(0xFF8B5A5A), // Base
+        const Color(0xFFFADADD), // High Gloss Specular
+        const Color(0xFF8B5A5A), // Base
+        const Color(0xFF5E3A3A), // Shadow side
       ],
-      stops: [0.0, 0.15, 0.4, 0.65, 0.85, 1.0],
-      begin: Alignment.bottomLeft,
-      end: Alignment.topRight,
+      stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
     );
-    
+
     final wirePaint = Paint()
-      ..shader = gradient.createShader(Rect.fromLTWH(0, -size.height, size.width, size.height * 2))
+      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.0
+      ..strokeWidth = 5.5
       ..strokeCap = StrokeCap.round;
-    
+
     canvas.drawPath(path, wirePaint);
 
-    // 5. Specular Shine (Adds that extra metallic "pop")
+    // 5. Specular Reflection (Sharp pop)
     final shinePaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+      ..color = Colors.white.withOpacity(0.3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
-      
+
     final shinePath = Path();
-    shinePath.moveTo(size.width * 0.3, size.height * 0.1);
-    shinePath.quadraticBezierTo(size.width * 0.5, -size.height * 0.1, size.width * 0.7, size.height * 0.15);
+    shinePath.moveTo(size.width * 0.25, size.height * 0.05);
+    shinePath.quadraticBezierTo(
+      size.width * 0.5, -size.height * 0.15, 
+      size.width * 0.75, size.height * 0.1
+    );
     canvas.drawPath(shinePath, shinePaint);
   }
 
