@@ -57,7 +57,12 @@ class TaskProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addTask(String title, {String desc = '', int priority = 0, DateTime? customDate}) async {
+  Future<void> addTask(
+    String title, {
+    String desc = '',
+    int priority = 0,
+    DateTime? customDate,
+  }) async {
     final newTask = Task(
       title: title,
       description: desc,
@@ -84,7 +89,7 @@ class TaskProvider with ChangeNotifier {
     final today = DateTime.now();
     final startOfToday = DateTime(today.year, today.month, today.day);
 
-    List<Task> overdueTasks = _tasks.where((t) {
+    final List<Task> overdueTasks = _tasks.where((t) {
       if (t.isCompleted) return false;
       // Check if due date is strictly before today (ignoring time if we store just dates, but here we compare vs start of today)
       return t.dueDate.isBefore(startOfToday);
@@ -102,30 +107,31 @@ class TaskProvider with ChangeNotifier {
     await loadTasks();
   }
 
-
   // --- DASHBOARD LOGIC (Notes & Lists) ---
   String _currentNote = "";
   String get currentNote => _currentNote;
 
-  Map<String, List<DashboardItem>> _dashboardItems = {
+  final Map<String, List<DashboardItem>> _dashboardItems = {
     'priority': [],
     'morning': [],
     'afternoon': [],
   };
 
   List<DashboardItem> getItems(String type) => _dashboardItems[type] ?? [];
-  
+
   // NOTE: This should be called when date changes in DailyView
   Future<void> loadDashboard(DateTime date) async {
     final dateStr = date.toIso8601String().split('T')[0];
-    
+
     // Load Note
     _currentNote = await _dbHelper.getDailyNote(dateStr) ?? "";
 
     // Load Items
     for (var type in ['priority', 'morning', 'afternoon']) {
       final itemsData = await _dbHelper.getDashboardItems(dateStr, type);
-      _dashboardItems[type] = itemsData.map((e) => DashboardItem.fromMap(e)).toList();
+      _dashboardItems[type] = itemsData
+          .map((e) => DashboardItem.fromMap(e))
+          .toList();
     }
     notifyListeners();
   }
@@ -137,16 +143,20 @@ class TaskProvider with ChangeNotifier {
     // Notify not strictly needed if only typing, but good for sync
   }
 
-  Future<void> addDashboardItem(DateTime date, String type, String content) async {
+  Future<void> addDashboardItem(
+    DateTime date,
+    String type,
+    String content,
+  ) async {
     final dateStr = date.toIso8601String().split('T')[0];
     // Calculate new position (end of list)
-    int position = (_dashboardItems[type]?.length ?? 0);
-    
+    final int position = (_dashboardItems[type]?.length ?? 0);
+
     final newItem = DashboardItem(
       type: type,
-      content: content, 
-      date: dateStr, 
-      position: position
+      content: content,
+      date: dateStr,
+      position: position,
     );
 
     await _dbHelper.insertDashboardItem(newItem.toMap());
@@ -169,7 +179,11 @@ class TaskProvider with ChangeNotifier {
   List<CalendarEvent> get events => _events;
 
   Future<void> addEvent(String title, String description, DateTime date) async {
-    final newEvent = CalendarEvent(title: title, description: description, date: date);
+    final newEvent = CalendarEvent(
+      title: title,
+      description: description,
+      date: date,
+    );
     await _dbHelper.insertEvent(newEvent.toMap());
     await loadTasks(); // Reloads events too
   }
@@ -184,7 +198,8 @@ class TaskProvider with ChangeNotifier {
   }
 
   // --- WEEKLY NOTES LOGIC ---
-  Map<String, String> _weeklyNotes = {}; // Key: "YEAR_MONTH_WEEKINDEX_SIDE"
+  final Map<String, String> _weeklyNotes =
+      {}; // Key: "YEAR_MONTH_WEEKINDEX_SIDE"
 
   String getWeeklyNote(int year, int monthIndex, int weekIndex, String side) {
     final key = "${year}_${monthIndex}_${weekIndex}_$side";
@@ -205,7 +220,13 @@ class TaskProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveWeeklyNote(int year, int monthIndex, int weekIndex, String side, String content) async {
+  Future<void> saveWeeklyNote(
+    int year,
+    int monthIndex,
+    int weekIndex,
+    String side,
+    String content,
+  ) async {
     final key = "${year}_${monthIndex}_${weekIndex}_$side";
     _weeklyNotes[key] = content;
     await _dbHelper.saveWeeklyNote(key, content);
@@ -219,7 +240,12 @@ class CalendarEvent {
   String description;
   DateTime date;
 
-  CalendarEvent({this.id, required this.title, this.description = '', required this.date});
+  CalendarEvent({
+    this.id,
+    required this.title,
+    this.description = '',
+    required this.date,
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -249,10 +275,10 @@ class DashboardItem {
   int position;
 
   DashboardItem({
-    this.id, 
-    required this.type, 
-    required this.content, 
-    this.isCompleted = false, 
+    this.id,
+    required this.type,
+    required this.content,
+    this.isCompleted = false,
     required this.date,
     this.position = 0,
   });
@@ -279,5 +305,3 @@ class DashboardItem {
     );
   }
 }
-
-

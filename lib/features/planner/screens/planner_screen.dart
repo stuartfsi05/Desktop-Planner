@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
 import 'package:amanda_planner/features/planner/providers/task_provider.dart';
 import 'package:amanda_planner/shared/layout/physical_layout.dart';
@@ -20,11 +19,11 @@ enum PlannerView { month, week, day }
 
 class _HomeScreenState extends State<HomeScreen> {
   // Navigation State
-  final int _selectedYear = DateTime.now().year;
-  int _selectedMonthIndex = DateTime.now().month - 1; 
-  int _selectedWeekIndex = -1; 
+  int _selectedYear = DateTime.now().year;
+  int _selectedMonthIndex = DateTime.now().month - 1;
+  int _selectedWeekIndex = -1;
   PlannerView _currentView = PlannerView.month;
-  
+
   // Day View State
   DateTime _currentDisplayDate = DateTime.now();
 
@@ -53,13 +52,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     setState(() {
       // 1. Push current state to history
-      _history.add(NavigationState(
-        year: _selectedYear,
-        monthIndex: _selectedMonthIndex,
-        weekIndex: _selectedWeekIndex,
-        view: _currentView,
-        displayDate: _currentDisplayDate,
-      ));
+      _history.add(
+        NavigationState(
+          year: _selectedYear,
+          monthIndex: _selectedMonthIndex,
+          weekIndex: _selectedWeekIndex,
+          view: _currentView,
+          displayDate: _currentDisplayDate,
+        ),
+      );
 
       // 2. Clear forward history if it's a new navigation
       if (clearForward) {
@@ -78,23 +79,25 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_history.isEmpty) return;
     setState(() {
       // 1. Push current to forward
-      _forwardHistory.add(NavigationState(
-        year: _selectedYear,
-        monthIndex: _selectedMonthIndex,
-        weekIndex: _selectedWeekIndex,
-        view: _currentView,
-        displayDate: _currentDisplayDate,
-      ));
+      _forwardHistory.add(
+        NavigationState(
+          year: _selectedYear,
+          monthIndex: _selectedMonthIndex,
+          weekIndex: _selectedWeekIndex,
+          view: _currentView,
+          displayDate: _currentDisplayDate,
+        ),
+      );
 
       // 2. Pop from history
       final previous = _history.removeLast();
-      
+
       // 3. Apply state
       _selectedMonthIndex = previous.monthIndex;
       _selectedWeekIndex = previous.weekIndex;
       _currentView = previous.view;
       _currentDisplayDate = previous.displayDate;
-      // _selectedYear = previous.year; // If we supported year change
+      _selectedYear = previous.year;
     });
   }
 
@@ -102,13 +105,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_forwardHistory.isEmpty) return;
     setState(() {
       // 1. Push current to history
-      _history.add(NavigationState(
-        year: _selectedYear,
-        monthIndex: _selectedMonthIndex,
-        weekIndex: _selectedWeekIndex,
-        view: _currentView,
-        displayDate: _currentDisplayDate,
-      ));
+      _history.add(
+        NavigationState(
+          year: _selectedYear,
+          monthIndex: _selectedMonthIndex,
+          weekIndex: _selectedWeekIndex,
+          view: _currentView,
+          displayDate: _currentDisplayDate,
+        ),
+      );
 
       // 2. Pop from forward
       final next = _forwardHistory.removeLast();
@@ -118,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedWeekIndex = next.weekIndex;
       _currentView = next.view;
       _currentDisplayDate = next.displayDate;
+      _selectedYear = next.year;
     });
   }
 
@@ -137,7 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Tarefas Pendentes'),
         content: Text(
-            'Você tem ${overdueTasks.length} tarefas de ontem. Mover para hoje?'),
+          'Você tem ${overdueTasks.length} tarefas de ontem. Mover para hoje?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -169,7 +176,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return PhysicalPlannerLayout(
       selectedIndex: _selectedMonthIndex,
       selectedWeekIndex: _selectedWeekIndex,
-      showLeftTabs: false, // User requested tabs ONLY in Month view (where they are internal)
+      showLeftTabs:
+          false, // User requested tabs ONLY in Month view (where they are internal)
       onTabSelected: (index) {
         _navigateTo(
           monthIndex: index,
@@ -220,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildMonthCalendar();
       case PlannerView.week:
         return VerticalWeeklyView(
-          weekIndex: _selectedWeekIndex, 
+          weekIndex: _selectedWeekIndex,
           monthIndex: _selectedMonthIndex,
           year: _selectedYear,
           onDaySelected: (date) {
@@ -244,9 +252,56 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       child: Column(
         children: [
-          Text(
-            "${_getMonthName(_selectedMonthIndex)} de $_selectedYear",
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black54),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const SizedBox(width: 80), // Balance Today button
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, color: Colors.black26),
+                      onPressed: () {
+                        setState(() {
+                          _selectedYear--;
+                        });
+                      },
+                    ),
+                    Text(
+                      "${_getMonthName(_selectedMonthIndex)} de $_selectedYear",
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, color: Colors.black26),
+                      onPressed: () {
+                        setState(() {
+                          _selectedYear++;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _selectedYear = DateTime.now().year;
+                    _selectedMonthIndex = DateTime.now().month - 1;
+                    _currentDisplayDate = DateTime.now();
+                  });
+                },
+                icon: const Icon(Icons.today, size: 18),
+                label: const Text("Hoje"),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF24555D),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -262,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
               onWeekSelected: (weekIndex) {
-                 _navigateTo(
+                _navigateTo(
                   monthIndex: _selectedMonthIndex,
                   weekIndex: weekIndex,
                   view: PlannerView.week,
@@ -281,9 +336,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getMonthName(int index) {
-      if (index < 0 || index > 11) return "";
-      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      return months[index];
+    if (index < 0 || index > 11) return "";
+    const months = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ];
+    return months[index];
   }
 }
 

@@ -21,17 +21,25 @@ class MonthlyCalendar extends StatelessWidget {
     // 1. Calculate Calendar Data
     final firstDayOfMonth = DateTime(year, monthIndex + 1, 1);
     final daysInMonth = DateUtils.getDaysInMonth(year, monthIndex + 1);
-    
+
     // Grid starts Monday
     final int firstWeekday = firstDayOfMonth.weekday;
     // Mon(1)->0, Tue(2)->1 ... Sun(7)->6
     final int offset = firstWeekday - 1;
-    
+
     final int totalSlots = daysInMonth + offset;
     // Force 6 rows to standardize cell size
-    final int totalWeeks = 6;
+    const int totalWeeks = 6;
 
-    final List<String> weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    final List<String> weekDays = [
+      'Seg',
+      'Ter',
+      'Qua',
+      'Qui',
+      'Sex',
+      'Sáb',
+      'Dom',
+    ];
     final theme = Theme.of(context);
 
     return Column(
@@ -41,20 +49,27 @@ class MonthlyCalendar extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Row(
             children: [
-               const SizedBox(width: 48), // Space for Week Tab
-               Expanded(
-                 child: Row(
-                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                   children: weekDays.map((day) => Expanded(
-                     child: Center(
-                       child: Text(
-                         day.toUpperCase(), 
-                         style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey)
+              const SizedBox(width: 48), // Space for Week Tab
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: weekDays
+                      .map(
+                        (day) => Expanded(
+                          child: Center(
+                            child: Text(
+                              day.toUpperCase(),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
                         ),
-                     ),
-                   )).toList(),
-                 ),
-               ),
+                      )
+                      .toList(),
+                ),
+              ),
             ],
           ),
         ),
@@ -65,12 +80,17 @@ class MonthlyCalendar extends StatelessWidget {
             padding: const EdgeInsets.only(top: 12),
             child: Column(
               children: List.generate(totalWeeks, (weekIndex) {
-                 return Expanded(
-                   child: Padding(
-                     padding: const EdgeInsets.only(bottom: 8.0),
-                     child: _buildWeekRow(context, weekIndex, offset, daysInMonth),
-                   ),
-                 );
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: _buildWeekRow(
+                      context,
+                      weekIndex,
+                      offset,
+                      daysInMonth,
+                    ),
+                  ),
+                );
               }),
             ),
           ),
@@ -79,26 +99,31 @@ class MonthlyCalendar extends StatelessWidget {
     );
   }
 
-  Widget _buildWeekRow(BuildContext context, int weekIndex, int offset, int daysInMonth) {
-     final theme = Theme.of(context);
-     final weekColor = [
-        const Color(0xFFFADADA),
-        const Color(0xFFD6E6BE),
-        const Color(0xFFAECCCC),
-        const Color(0xFFEDB1B1),
-        const Color(0xFFECE9AC),
-        const Color(0xFFC8B1C0),
-     ][weekIndex % 6];
+  Widget _buildWeekRow(
+    BuildContext context,
+    int weekIndex,
+    int offset,
+    int daysInMonth,
+  ) {
+    final theme = Theme.of(context);
+    final weekColor = [
+      const Color(0xFFFADADA),
+      const Color(0xFFD6E6BE),
+      const Color(0xFFAECCCC),
+      const Color(0xFFEDB1B1),
+      const Color(0xFFECE9AC),
+      const Color(0xFFC8B1C0),
+    ][weekIndex % 6];
 
     // Check if this week has ANY days in the current month
     bool hasDays = false;
     for (int i = 0; i < 7; i++) {
-        int gIndex = (weekIndex * 7) + i;
-        int dNum = gIndex - offset + 1;
-        if (dNum >= 1 && dNum <= daysInMonth) {
-            hasDays = true;
-            break;
-        }
+      final int gIndex = (weekIndex * 7) + i;
+      final int dNum = gIndex - offset + 1;
+      if (dNum >= 1 && dNum <= daysInMonth) {
+        hasDays = true;
+        break;
+      }
     }
 
     return Row(
@@ -112,14 +137,18 @@ class MonthlyCalendar extends StatelessWidget {
               onTap: () => onWeekSelected(weekIndex),
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                width: 24, 
+                width: 24,
                 margin: const EdgeInsets.only(right: 16),
                 decoration: BoxDecoration(
                   color: weekColor,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
-                    BoxShadow(color: weekColor.withOpacity(0.4), blurRadius: 4, offset: const Offset(0,2))
-                  ]
+                    BoxShadow(
+                      color: weekColor.withValues(alpha: 0.4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -127,93 +156,118 @@ class MonthlyCalendar extends StatelessWidget {
         else
           // Maintain spacing even if hidden
           const SizedBox(width: 40),
-        
+
         // 2. DAYS OF THE WEEK
         Expanded(
           child: Row(
             children: List.generate(7, (dayIndex) {
-               int globalIndex = (weekIndex * 7) + dayIndex;
-               int dayNum = globalIndex - offset + 1;
-               
-               if (dayNum < 1 || dayNum > daysInMonth) {
-                 return const Expanded(child: SizedBox()); // Empty slot
-               }
-               
-               final date = DateTime(year, monthIndex + 1, dayNum);
-               final isToday = DateUtils.isSameDay(date, DateTime.now());
-               
-               return Expanded(
-                 child: InkWell(
-                    onTap: () => onDaySelected(date),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                         color: isToday ? theme.colorScheme.primary.withOpacity(0.05) : Colors.white,
-                         border: isToday 
-                            ? Border.all(color: theme.colorScheme.primary.withOpacity(0.5)) 
-                            : Border.all(color: Colors.grey.shade200),
-                         borderRadius: BorderRadius.circular(8),
-                         boxShadow: [
-                            if (!isToday)
-                              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 2, offset: const Offset(0,1))
-                         ]
-                      ),
-                      alignment: Alignment.topLeft, 
-                      padding: const EdgeInsets.all(6),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Day Number
-                          Text(
-                            "$dayNum",
-                            style: isToday 
-                              ? theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)
-                              : theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+              final int globalIndex = (weekIndex * 7) + dayIndex;
+              final int dayNum = globalIndex - offset + 1;
+
+              if (dayNum < 1 || dayNum > daysInMonth) {
+                return const Expanded(child: SizedBox()); // Empty slot
+              }
+
+              final date = DateTime(year, monthIndex + 1, dayNum);
+              final isToday = DateUtils.isSameDay(date, DateTime.now());
+
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onDaySelected(date),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: isToday
+                          ? theme.colorScheme.primary.withValues(alpha: 0.05)
+                          : Colors.white,
+                      border: isToday
+                          ? Border.all(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.5,
+                              ),
+                            )
+                          : Border.all(color: Colors.grey.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        if (!isToday)
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
                           ),
-                          const SizedBox(height: 4),
-                          // Events List
-                          Expanded(
-                            child: Consumer<TaskProvider>(
-                              builder: (context, provider, _) {
-                                final events = provider.getEventsForDay(date);
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: events.take(4).map((e) => Padding( // Increased take since we have more height
-                                    padding: const EdgeInsets.only(bottom: 2.0),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 4, height: 4,
-                                          decoration: BoxDecoration(
-                                            color: theme.colorScheme.secondary,
-                                            shape: BoxShape.circle
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Expanded(
-                                          child: Text(
-                                            e.title,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 9, 
-                                              color: Colors.grey.shade800,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )).toList(),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
-                 ),
-               );
+                    alignment: Alignment.topLeft,
+                    padding: const EdgeInsets.all(6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Day Number
+                        Text(
+                          "$dayNum",
+                          style: isToday
+                              ? theme.textTheme.titleSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                )
+                              : theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade700,
+                                ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Events List
+                        Expanded(
+                          child: Consumer<TaskProvider>(
+                            builder: (context, provider, _) {
+                              final events = provider.getEventsForDay(date);
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: events
+                                    .take(4)
+                                    .map(
+                                      (e) => Padding(
+                                        // Increased take since we have more height
+                                        padding: const EdgeInsets.only(
+                                          bottom: 2.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 4,
+                                              height: 4,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    theme.colorScheme.secondary,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                e.title,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  color: Colors.grey.shade800,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
             }),
           ),
         ),

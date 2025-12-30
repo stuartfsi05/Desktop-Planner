@@ -71,7 +71,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 width: 300,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -83,7 +83,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 width: 400,
                 height: 400,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -91,7 +91,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
             // 2. Main Content Centered/Layout
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 80.0, vertical: 60.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 80.0,
+                vertical: 60.0,
+              ),
               child: Row(
                 children: [
                   // LEFT SIDE: Greeting & Date
@@ -101,17 +104,27 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
-                              BoxShadow(color: Colors.pink.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                              BoxShadow(
+                                color: Colors.pink.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
                             ],
                           ),
                           child: Text(
-                            DateFormat('EEEE, dd/MM/yyyy', 'pt_BR').format(_now).toUpperCase(),
+                            DateFormat(
+                              'EEEE, dd/MM/yyyy',
+                              'pt_BR',
+                            ).format(_now).toUpperCase(),
                             style: const TextStyle(
                               color: Color(0xFFD81B60), // Deep Pink
                               fontSize: 16,
@@ -141,8 +154,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             letterSpacing: -0.5,
                           ),
                         ),
-                         const SizedBox(height: 10),
-                         const Text(
+                        const SizedBox(height: 10),
+                        const Text(
                           "Vamos fazer hoje um dia incrível!",
                           style: TextStyle(
                             color: Color(0xFF757575),
@@ -173,12 +186,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.red.withOpacity(0.1),
+                                  color: Colors.red.withValues(alpha: 0.1),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                 ),
                               ],
-                              border: Border.all(color: const Color(0xFFFFC1E3), width: 2), // Pale Pink Border
+                              border: Border.all(
+                                color: const Color(0xFFFFC1E3),
+                                width: 2,
+                              ), // Pale Pink Border
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -192,7 +208,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                         color: Color(0xFFFF80AB), // Accent Pink
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                                      child: const Icon(
+                                        Icons.favorite,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     const Text(
@@ -208,34 +228,47 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                 const SizedBox(height: 24),
                                 if (highPriorityTasks.isEmpty)
                                   const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 20.0,
+                                    ),
                                     child: Text(
                                       "Tudo tranquilo por enquanto! 🌸",
-                                        style: TextStyle(color: Colors.black54, fontStyle: FontStyle.italic),
+                                      style: TextStyle(
+                                        color: Colors.black54,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   )
                                 else
-                                  ...highPriorityTasks.map((task) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 16.0),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle_outline, color: Color(0xFFF48FB1), size: 18),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            task.title,
-                                            style: const TextStyle(
-                                              color: Color(0xFF424242),
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                  ...highPriorityTasks.map(
+                                    (task) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 16.0,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle_outline,
+                                            color: Color(0xFFF48FB1),
+                                            size: 18,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              task.title,
+                                              style: const TextStyle(
+                                                color: Color(0xFF424242),
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  )),
+                                  ),
                               ],
                             ),
                           ),
@@ -280,4 +313,3 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 }
-

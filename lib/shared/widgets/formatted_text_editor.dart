@@ -30,7 +30,7 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
     super.initState();
     _initController(widget.initialContent);
   }
-  
+
   @override
   void didUpdateWidget(covariant FormattedTextEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -38,40 +38,42 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
     // We check if the current document text is different to avoid overwriting user while typing
     // But since this is widely used, we rely on parent Key to force rebuild on context switch.
     if (widget.initialContent != oldWidget.initialContent) {
-       // Only re-init if the content is NOT what we just emitted.
-       // This comparison is tricky. 
-       // For this app, DailyView updates widget.date which triggers full reload.
-       // So we can assume if this widget is persistent, we might need to update.
-       // But simplest is to Key the widget in the parent.
-       _initController(widget.initialContent);
+      // Only re-init if the content is NOT what we just emitted.
+      // This comparison is tricky.
+      // For this app, DailyView updates widget.date which triggers full reload.
+      // So we can assume if this widget is persistent, we might need to update.
+      // But simplest is to Key the widget in the parent.
+      _initController(widget.initialContent);
     }
   }
 
   void _initController(String content) {
     Document doc;
     try {
-       if (content.trim().startsWith('[') || content.trim().startsWith('{')) {
-          final json = jsonDecode(content);
-          doc = Document.fromJson(json);
-       } else {
-          doc = Document()..insert(0, content.endsWith('\n') ? content : '$content\n');
-       }
+      if (content.trim().startsWith('[') || content.trim().startsWith('{')) {
+        final json = jsonDecode(content);
+        doc = Document.fromJson(json);
+      } else {
+        doc = Document()
+          ..insert(0, content.endsWith('\n') ? content : '$content\n');
+      }
     } catch (e) {
-      doc = Document()..insert(0, content.endsWith('\n') ? content : '$content\n');
+      doc = Document()
+        ..insert(0, content.endsWith('\n') ? content : '$content\n');
     }
-    
+
     _controller = QuillController(
       document: doc,
       selection: const TextSelection.collapsed(offset: 0),
     );
-    
+
     _controller.changes.listen((event) {
-       // Save as JSON string
-       final json = jsonEncode(_controller.document.toDelta().toJson());
-       widget.onChanged(json);
+      // Save as JSON string
+      final json = jsonEncode(_controller.document.toDelta().toJson());
+      widget.onChanged(json);
     });
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
@@ -115,9 +117,7 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
                   multiRowsDisplay: false,
                   showIndent: !widget.isCompact,
                   buttonOptions: const QuillSimpleToolbarButtonOptions(
-                    base: QuillToolbarBaseButtonOptions(
-                      iconSize: 12.0,
-                    ),
+                    base: QuillToolbarBaseButtonOptions(iconSize: 12.0),
                   ),
                 ),
               ),
@@ -127,18 +127,18 @@ class _FormattedTextEditorState extends State<FormattedTextEditor> {
         const Divider(height: 1, color: Colors.grey),
         Expanded(
           child: Container(
-             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-             color: Colors.white,
-             child: QuillEditor(
-               controller: _controller,
-               scrollController: _scrollController,
-               focusNode: _focusNode,
-               config: QuillEditorConfig(
-                 autoFocus: false,
-                 expands: false,
-                 padding: EdgeInsets.zero,
-               ), 
-             ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            color: Colors.white,
+            child: QuillEditor(
+              controller: _controller,
+              scrollController: _scrollController,
+              focusNode: _focusNode,
+              config: const QuillEditorConfig(
+                autoFocus: false,
+                expands: false,
+                padding: EdgeInsets.zero,
+              ),
+            ),
           ),
         ),
       ],

@@ -28,7 +28,7 @@ class DatabaseHelper {
     // Finds the directory where the .exe is currently running
     // This is CRITICAL for USB portability
     try {
-      var exePath = File(Platform.resolvedExecutable).parent.path;
+      final exePath = File(Platform.resolvedExecutable).parent.path;
       return p.join(exePath, 'amanda_data.db');
     } catch (e) {
       // Fallback for development (e.g., flutter run)
@@ -37,7 +37,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = _getDatabasePath();
+    final String path = _getDatabasePath();
     return await openDatabase(
       path,
       version: 4, // Bump version
@@ -79,7 +79,7 @@ class DatabaseHelper {
   }
 
   Future<void> _createEventsTable(Database db) async {
-     await db.execute('''
+    await db.execute('''
       CREATE TABLE events(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
@@ -117,17 +117,17 @@ class DatabaseHelper {
 
   // CRUD Operations
   Future<int> insertTask(Map<String, dynamic> task) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.insert('tasks', task);
   }
 
   Future<List<Map<String, dynamic>>> getTasks() async {
-    Database db = await database;
+    final Database db = await database;
     return await db.query('tasks', orderBy: 'priority DESC, dueDate ASC');
   }
 
   Future<int> updateTask(Map<String, dynamic> task) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.update(
       'tasks',
       task,
@@ -137,45 +137,40 @@ class DatabaseHelper {
   }
 
   Future<int> deleteTask(int id) async {
-    Database db = await database;
-    return await db.delete(
-      'tasks',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final Database db = await database;
+    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 
   // Event Operations
   Future<int> insertEvent(Map<String, dynamic> event) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.insert('events', event);
   }
 
   Future<List<Map<String, dynamic>>> getEvents() async {
-    Database db = await database;
+    final Database db = await database;
     return await db.query('events', orderBy: 'date ASC');
   }
 
   Future<int> deleteEvent(int id) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.delete('events', where: 'id = ?', whereArgs: [id]);
   }
 
   // Dashboard Operations
-  
+
   // Notes
   Future<void> saveDailyNote(String date, String content) async {
-    Database db = await database;
-    await db.insert(
-      'daily_notes',
-      {'date': date, 'content': content},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final Database db = await database;
+    await db.insert('daily_notes', {
+      'date': date,
+      'content': content,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<String?> getDailyNote(String date) async {
-    Database db = await database;
-    List<Map<String, dynamic>> maps = await db.query(
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
       'daily_notes',
       where: 'date = ?',
       whereArgs: [date],
@@ -188,17 +183,16 @@ class DatabaseHelper {
 
   // Weekly Notes
   Future<void> saveWeeklyNote(String id, String content) async {
-    Database db = await database;
-    await db.insert(
-      'weekly_notes',
-      {'id': id, 'content': content},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final Database db = await database;
+    await db.insert('weekly_notes', {
+      'id': id,
+      'content': content,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<String?> getWeeklyNote(String id) async {
-    Database db = await database;
-    List<Map<String, dynamic>> maps = await db.query(
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
       'weekly_notes',
       where: 'id = ?',
       whereArgs: [id],
@@ -211,12 +205,15 @@ class DatabaseHelper {
 
   // Dashboard Items (Checklists)
   Future<int> insertDashboardItem(Map<String, dynamic> item) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.insert('dashboard_items', item);
   }
 
-  Future<List<Map<String, dynamic>>> getDashboardItems(String date, String type) async {
-    Database db = await database;
+  Future<List<Map<String, dynamic>>> getDashboardItems(
+    String date,
+    String type,
+  ) async {
+    final Database db = await database;
     return await db.query(
       'dashboard_items',
       where: 'date = ? AND type = ?',
@@ -226,7 +223,7 @@ class DatabaseHelper {
   }
 
   Future<int> updateDashboardItem(Map<String, dynamic> item) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.update(
       'dashboard_items',
       item,
@@ -236,7 +233,7 @@ class DatabaseHelper {
   }
 
   Future<int> deleteDashboardItem(int id) async {
-    Database db = await database;
+    final Database db = await database;
     return await db.delete('dashboard_items', where: 'id = ?', whereArgs: [id]);
   }
 }
