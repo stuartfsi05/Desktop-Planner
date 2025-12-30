@@ -166,7 +166,11 @@ class PhysicalPlannerLayout extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(
                   12, 
-                  (index) => _buildSpiralRing(),
+                  (index) => Container(
+                    height: 50, // Height increased to 50px as per design tip to avoid clipping
+                    alignment: Alignment.center,
+                    child: _buildSpiralRing(),
+                  ),
                 ),
               ),
             ),
@@ -329,12 +333,12 @@ class _SpiralPainter extends CustomPainter {
     // --- CONSTANTES DE GEOMETRIA (Ajuste Fino Estabilizado) ---
     // Posição X fixa para evitar deformações ao redimensionar
     const double holeX = 35.0; 
-    const double holeY = size.height * 0.35; // Alinhado ao centro visual do item
-    const double holeRadius = 3.6;
+    final double holeY = size.height / 2; // Centralizado no item da lista (50px)
+    const double holeRadius = 4.0;
     
     // Onde a espiral "entra" na lombada (esquerda). 
-    // spineX em -11 para compensar o offset do Positioned e mergulhar na mesa
-    const double spineX = -11.0; 
+    // spineX em -10 para parecer que entra por baixo do fichário.
+    const double spineX = -10.0; 
     const double archHeight = 22.0;
 
     // --- LOGICA DE PROFUNDIDADE (TUCK-BEHIND) ---
@@ -367,19 +371,19 @@ class _SpiralPainter extends CustomPainter {
     // Curva simétrica e estabilizada sugerida pelo usuário
     coilPath.cubicTo(
       holeX + 15, holeY - 5,        // CP1: Saída do furo
-      spineX + 18, holeY - archHeight, // CP2: Topo do arco (elipse tensa)
-      spineX, holeY - (archHeight * 0.45) // Ponto Final: Entrada na lombada
+      spineX + 15, holeY - archHeight, // CP2: Topo do arco
+      spineX, holeY - (archHeight * 0.4) // Ponto Final: Entrada na lombada
     );
 
     // --- CAMADA 3: Sombra Projetada (Drop Shadow) ---
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 7.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+      ..strokeWidth = 6.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
     
     canvas.save();
-    canvas.translate(3, 4); // Deslocamento para profundidade 3D
+    canvas.translate(3, 3); // Deslocamento para profundidade 3D
     canvas.drawPath(coilPath, shadowPaint);
     canvas.restore();
 
@@ -407,7 +411,7 @@ class _SpiralPainter extends CustomPainter {
     final highlightPaint = Paint()
       ..color = Colors.white.withOpacity(0.6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
+      ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
       
     canvas.save();
