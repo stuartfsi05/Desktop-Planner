@@ -330,32 +330,29 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // --- CONSTANTES DE GEOMETRIA (Ajuste Fino Estabilizado) ---
-    // Posição X fixa para evitar deformações ao redimensionar
-    const double holeX = 35.0; 
-    final double holeY = size.height / 2; // Centralizado no item da lista (50px)
+    // --- CONSTANTES DE GEOMETRIA (Deeper & Wider) ---
+    // holeX em 48.0 coloca o furo mais pra dentro da folha branca
+    const double holeX = 48.0; 
+    final double holeY = size.height / 2; 
     const double holeRadius = 4.0;
     
-    // Onde a espiral "entra" na lombada (esquerda). 
-    // spineX em -10 para parecer que entra por baixo do fichário.
-    const double spineX = -10.0; 
-    const double archHeight = 22.0;
+    // spineX em -35.0 expande a espiral bem mais para a esquerda sobre a mesa
+    const double spineX = -35.0; 
+    const double archHeight = 28.0; // Aumentado para manter proporção do arco largo
 
     // --- LOGICA DE PROFUNDIDADE (TUCK-BEHIND) ---
-    // Definimos os limites do fichário rosa para o recorte
-    const binderEdgeLocal = 14.0; // Borda externa do caderno
-    const paperEdgeLocal = 29.0;  // Onde começa a parte branca da folha
+    const binderEdgeLocal = 14.0; 
+    const paperEdgeLocal = 29.0;
     
-    // 1. "Mergulho": Ocultamos a espiral quando ela passa sobre a lombada rosa (14 < X < 29)
     canvas.save();
     final visibleArea = Path()
-      ..addRect(Rect.fromLTWH(-100, -100, binderEdgeLocal + 100, size.height + 200)) // Area da Mesa
-      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width + 100, size.height + 200)); // Area do Papel
+      ..addRect(Rect.fromLTWH(-150, -100, binderEdgeLocal + 150, size.height + 200)) 
+      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width + 100, size.height + 200));
     canvas.clipPath(visibleArea);
 
     // --- CAMADA 1: O Furo no Papel ---
     final holePaint = Paint()
-      ..color = const Color(0xFF111111) // Preto profundo para o furo
+      ..color = const Color(0xFF111111)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(holeX, holeY), holeRadius, holePaint);
 
@@ -365,25 +362,25 @@ class _SpiralPainter extends CustomPainter {
       ..strokeWidth = 0.8;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- CAMADA 2: O Caminho da Espiral (Geometria Unificada) ---
+    // --- CAMADA 2: O Caminho da Espiral (Geometria Expandida) ---
     final coilPath = Path();
     coilPath.moveTo(holeX, holeY);
-    // Curva simétrica e estabilizada sugerida pelo usuário
+    // Ajustado para um sweep mais largo e natural
     coilPath.cubicTo(
-      holeX + 15, holeY - 5,        // CP1: Saída do furo
-      spineX + 15, holeY - archHeight, // CP2: Topo do arco
-      spineX, holeY - (archHeight * 0.4) // Ponto Final: Entrada na lombada
+      holeX + 10, holeY - 4,        // CP1: Saída suave do furo
+      spineX + 25, holeY - archHeight, // CP2: Topo do arco (mais largo)
+      spineX, holeY - (archHeight * 0.4) // Ponto Final: Mergulho na lombada
     );
 
     // --- CAMADA 3: Sombra Projetada (Drop Shadow) ---
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+      ..strokeWidth = 7.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
     
     canvas.save();
-    canvas.translate(3, 3); // Deslocamento para profundidade 3D
+    canvas.translate(4, 5); // Sombra mais profunda para arco maior
     canvas.drawPath(coilPath, shadowPaint);
     canvas.restore();
 
@@ -396,22 +393,22 @@ class _SpiralPainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [roseDark, roseMid, roseLight, roseMid, roseDark],
-      stops: const [0.0, 0.3, 0.5, 0.7, 1.0], // Gradiente cilíndrico sugerido
+      stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
     );
 
     final metalPaint = Paint()
       ..shader = metalGradient.createShader(Rect.fromLTWH(spineX, holeY - archHeight, holeX - spineX, archHeight))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0 // Espessura refinada
+      ..strokeWidth = 6.0 
       ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(coilPath, metalPaint);
 
     // --- CAMADA 5: Brilho Especular (Polimento Rim Light) ---
     final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.6)
+      ..color = Colors.white.withOpacity(0.55)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 1.6
       ..strokeCap = StrokeCap.round;
       
     canvas.save();
@@ -419,7 +416,7 @@ class _SpiralPainter extends CustomPainter {
     canvas.drawPath(coilPath, highlightPaint);
     canvas.restore();
 
-    canvas.restore(); // Fecha o clipping do "tuck-behind"
+    canvas.restore();
   }
 
   @override
