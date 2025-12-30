@@ -368,13 +368,13 @@ class _SpiralPainter extends CustomPainter {
     );
 
     // 2. ARCO INFERIOR (A PARTE QUE VAI POR BAIXO - O RETORNO)
-    // Volta da mesa e mergulha atrás da capa rosa
+    // Volta da mesa e mergulha atrás da capa rosa com caimento elegante
     final lowerPath = Path();
     lowerPath.moveTo(spineX, holeY - (archHeight * 0.3));
     lowerPath.cubicTo(
-      spineX - 10, holeY + (archHeight * 0.2), // Faz a curva externa
-      binderEdgeLocal - 5, holeY + (archHeight * 0.6), // Mirando para trás da capa
-      binderEdgeLocal, holeY + (archHeight * 0.5) // Mergulha na borda da capa
+      spineX - 10, holeY + (archHeight * 0.4), // Curva externa mais generosa
+      binderEdgeLocal - 10, holeY + (archHeight * 0.9), // Mirando bem baixo atrás da capa
+      binderEdgeLocal, holeY + (archHeight * 0.8) // Mergulha com caimento simétrico
     );
 
     // --- SETUP DE MATERIAIS ---
