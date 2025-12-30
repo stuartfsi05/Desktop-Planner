@@ -69,8 +69,8 @@ class PhysicalPlannerLayout extends StatelessWidget {
               // MAIN ROW CONTENT
               Row(
                 children: [
-                  // 2. Padding/Space for Spine (Visual logic moved to Occlusion layer)
-                  const SizedBox(width: 30),
+                  // 2. Padding/Space for Spine (Reduced to 15 for a narrower look)
+                  const SizedBox(width: 15),
 
                   // 3. Main Paper Area
                   Expanded(
@@ -332,34 +332,34 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Context Clipping (Disappear behind cover edge)
+    // 1. Context Clipping (Disappear behind cover edge - tuned for narrow spine)
     canvas.save();
-    canvas.clipRect(Rect.fromLTWH(6, -size.height, size.width, size.height * 2));
+    canvas.clipRect(Rect.fromLTWH(4, -size.height, size.width, size.height * 2));
 
     // --- CAMADA 1: Furo Físico (Punch Hole) ---
-    final holeX = 42.0;
-    final holeY = size.height * 0.35; // Positioned higher for descending motion
-    final holeRadius = 3.6;
+    // Repositioned to X=27 to account for the narrow 15px spine
+    final holeX = 27.0;
+    final holeY = size.height * 0.35; 
+    final holeRadius = 4.0; // Slightly larger for thicker wire
 
     final holePaint = Paint()
-      ..color = const Color(0xFF1A1A1A) // Deep hole
+      ..color = const Color(0xFF1A1A1A)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(holeX, holeY), holeRadius, holePaint);
 
     final holeRim = Paint()
       ..color = Colors.white.withOpacity(0.3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
+      ..strokeWidth = 1.0;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
     // --- GEOMETRIA DA ESPIRAL (DESCENDENTE) ---
-    // The "Descending Spiral" motion: Exit Hole (High) -> Loop -> Behind Cover (Low)
     final start = Offset(holeX, holeY);
-    final end = Offset(2, size.height * 0.9); // Ends lower and left
+    final end = Offset(1, size.height * 0.95); // Tucks further left
     
     // Control points for a voluminous elliptical "C"
-    final cp1 = Offset(size.width * 1.1, -size.height * 0.3); // Arches right/up from hole
-    final cp2 = Offset(size.width * -0.3, -size.height * 0.2); // Sweeps left/high
+    final cp1 = Offset(size.width * 1.3, -size.height * 0.3); // Wider sweep
+    final cp2 = Offset(size.width * -0.5, -size.height * 0.2); 
 
     final coilPath = Path();
     coilPath.moveTo(start.dx, start.dy);
@@ -369,12 +369,12 @@ class _SpiralPainter extends CustomPainter {
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.14)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.2
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      ..strokeWidth = 8.0 // Doubled thickness (formerly 4.2)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
     
     final shadowPath = Path();
-    shadowPath.moveTo(start.dx + 1.5, start.dy + 2);
-    shadowPath.cubicTo(cp1.dx + 1.5, cp1.dy + 2, cp2.dx + 1.5, cp2.dy + 2, end.dx + 1.5, end.dy + 2);
+    shadowPath.moveTo(start.dx + 2, start.dy + 3);
+    shadowPath.cubicTo(cp1.dx + 2, cp1.dy + 3, cp2.dx + 2, cp2.dy + 3, end.dx + 2, end.dy + 3);
     canvas.drawPath(shadowPath, shadowPaint);
 
     // --- CAMADA 3: Fio Metálico (Rose Gold Champagne) ---
@@ -392,7 +392,7 @@ class _SpiralPainter extends CustomPainter {
     final metalPaint = Paint()
       ..shader = metalGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
+      ..strokeWidth = 7.0 // Doubled thickness (formerly 3.5)
       ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(coilPath, metalPaint);
@@ -401,7 +401,7 @@ class _SpiralPainter extends CustomPainter {
     final popPaint = Paint()
       ..color = Colors.white.withOpacity(0.5)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
+      ..strokeWidth = 2.0 // Doubled (formerly 1.0)
       ..strokeCap = StrokeCap.round;
 
     final popPath = Path();
