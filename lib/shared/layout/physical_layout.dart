@@ -326,95 +326,96 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // --- GEOMETRIC CONSTANTS (ALIGNED WITH LAYOUT) ---
-    const binderEdgeLocal = 14.0; 
-    const paperEdgeLocal = 29.0;
+    // --- CONSTANTES DE GEOMETRIA (Ajuste Fino Estabilizado) ---
+    // Posição X fixa para evitar deformações ao redimensionar
+    const double holeX = 35.0; 
+    const double holeY = size.height * 0.35; // Alinhado ao centro visual do item
+    const double holeRadius = 3.6;
     
-    // 1. "TUCK-BEHIND" CLIPPING
-    // Refined mask for absolute pixel-perfect transition at the leather edge
+    // Onde a espiral "entra" na lombada (esquerda). 
+    // spineX em -11 para compensar o offset do Positioned e mergulhar na mesa
+    const double spineX = -11.0; 
+    const double archHeight = 22.0;
+
+    // --- LOGICA DE PROFUNDIDADE (TUCK-BEHIND) ---
+    // Definimos os limites do fichário rosa para o recorte
+    const binderEdgeLocal = 14.0; // Borda externa do caderno
+    const paperEdgeLocal = 29.0;  // Onde começa a parte branca da folha
+    
+    // 1. "Mergulho": Ocultamos a espiral quando ela passa sobre a lombada rosa (14 < X < 29)
     canvas.save();
-    final visiblePath = Path()
-      ..addRect(Rect.fromLTWH(-100, -100, binderEdgeLocal + 100, size.height + 200)) 
-      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width + 100, size.height + 200));
-    canvas.clipPath(visiblePath);
+    final visibleArea = Path()
+      ..addRect(Rect.fromLTWH(-100, -100, binderEdgeLocal + 100, size.height + 200)) // Area da Mesa
+      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width + 100, size.height + 200)); // Area do Papel
+    canvas.clipPath(visibleArea);
 
-    // --- CAMADA 1: Furo Físico (Punch Hole) ---
-    // Repositioned to match the realistic "binding margin" of the reference
-    final holeX = 35.0; 
-    final holeY = size.height * 0.22; // Higher exit for better circularity
-    final holeRadius = 3.6; 
-
+    // --- CAMADA 1: O Furo no Papel ---
     final holePaint = Paint()
-      ..color = const Color(0xFF111111)
+      ..color = const Color(0xFF111111) // Preto profundo para o furo
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(holeX, holeY), holeRadius, holePaint);
 
     final holeRim = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withOpacity(0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- GEOMETRIA DA ESPIRAL (REF: CIRCULAR & SYMMETRIC) ---
-    final start = Offset(holeX, holeY);
-    // Descending more smoothly into the next loop's perspective
-    final end = Offset(-18, size.height * 0.9); 
-    
-    // Control points tuned for a symmetric, high-fidelity circular arc
-    // cp1 creates the "outwards" tension from the hole
-    final cp1 = Offset(size.width * 1.3, -size.height * 0.35); 
-    // cp2 creates the wide, sweeping wrap around the binder spine
-    final cp2 = Offset(size.width * -2.4, size.height * 0.1); 
-
+    // --- CAMADA 2: O Caminho da Espiral (Geometria Unificada) ---
     final coilPath = Path();
-    coilPath.moveTo(start.dx, start.dy);
-    coilPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
+    coilPath.moveTo(holeX, holeY);
+    // Curva simétrica e estabilizada sugerida pelo usuário
+    coilPath.cubicTo(
+      holeX + 15, holeY - 5,        // CP1: Saída do furo
+      spineX + 18, holeY - archHeight, // CP2: Topo do arco (elipse tensa)
+      spineX, holeY - (archHeight * 0.45) // Ponto Final: Entrada na lombada
+    );
 
-    // --- CAMADA 2: Sombra Suave (Drop Shadow) ---
+    // --- CAMADA 3: Sombra Projetada (Drop Shadow) ---
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 8.0 
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.0);
+      ..strokeWidth = 7.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
     
-    final shadowPath = Path();
-    shadowPath.moveTo(start.dx + 4, start.dy + 4);
-    shadowPath.cubicTo(cp1.dx + 4, cp1.dy + 4, cp2.dx + 4, cp2.dy + 4, end.dx + 4, end.dy + 4);
-    canvas.drawPath(shadowPath, shadowPaint);
+    canvas.save();
+    canvas.translate(3, 4); // Deslocamento para profundidade 3D
+    canvas.drawPath(coilPath, shadowPaint);
+    canvas.restore();
 
-    // --- CAMADA 3: Fio Metálico (High-Fidelity Champagne Gold) ---
-    const champagneGold = Color(0xFFFFF7F2);   
-    const roseGoldMid = Color(0xFFE4B2A3);     
-    const roseGoldShadow = Color(0xFF8B5E57);  
+    // --- CAMADA 4: O Metal (Corpo Rose Gold Champagne) ---
+    const roseDark = Color(0xFF8B5E57);
+    const roseMid = Color(0xFFE4B2A3);
+    const roseLight = Color(0xFFFFF7F2); 
 
     final metalGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [ roseGoldShadow, roseGoldMid, champagneGold, roseGoldMid, roseGoldShadow ],
-      stops: const [0.0, 0.25, 0.45, 0.75, 1.0],
+      colors: [roseDark, roseMid, roseLight, roseMid, roseDark],
+      stops: const [0.0, 0.3, 0.5, 0.7, 1.0], // Gradiente cilíndrico sugerido
     );
 
     final metalPaint = Paint()
-      ..shader = metalGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..shader = metalGradient.createShader(Rect.fromLTWH(spineX, holeY - archHeight, holeX - spineX, archHeight))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 7.0 
+      ..strokeWidth = 6.0 // Espessura refinada
       ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(coilPath, metalPaint);
 
-    // --- CAMADA 4: Brilho de Cume (Rim Highlight) ---
-    final popPaint = Paint()
-      ..color = Colors.white.withOpacity(0.65)
+    // --- CAMADA 5: Brilho Especular (Polimento Rim Light) ---
+    final highlightPaint = Paint()
+      ..color = Colors.white.withOpacity(0.6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0 
+      ..strokeWidth = 1.8
       ..strokeCap = StrokeCap.round;
-
-    final popPath = Path();
-    popPath.moveTo(size.width * -0.05, size.height * 0.05);
-    popPath.quadraticBezierTo(size.width * 0.4, -size.height * 0.4, size.width * 1.1, size.height * 0.2);
-    canvas.drawPath(popPath, popPaint);
-
+      
+    canvas.save();
+    canvas.translate(-0.5, -1.0); 
+    canvas.drawPath(coilPath, highlightPaint);
     canvas.restore();
+
+    canvas.restore(); // Fecha o clipping do "tuck-behind"
   }
 
   @override
