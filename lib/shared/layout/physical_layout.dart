@@ -332,104 +332,97 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // Save state for clipping Layer 4
+    // Pass 1: Local Clipping (Emergence from binder)
     canvas.save();
+    canvas.clipRect(Rect.fromLTWH(4, -size.height, size.width, size.height * 2));
 
-    // Layer 4 Boundary: Clipping X=8 (Simulates emergence from cover)
-    canvas.clipRect(Rect.fromLTWH(8, -size.height, size.width - 8, size.height * 2));
-
-    // --- CAMADA 1: Os Furos no Papel (Punch Holes) ---
-    final holeCenterX = 45.0; // Shifted left to be closer to the fold
-    final holeCenterY = size.height / 2;
-    final holeRadius = 4.5;
+    // --- CAMADA 1: Os Furos (Punch Holes) ---
+    // Repositioned to X=42 for a tighter, refined look
+    final holeCenterX = 42.0;
+    final holeCenterY = size.height * 0.55;
+    final holeRadius = 3.6;
     
-    // Internal Hole Shadow (Depth)
     final holePaint = Paint()
-      ..color = const Color(0xFF1F1F1F) 
+      ..color = const Color(0xFF222222)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(holeCenterX, holeCenterY), holeRadius, holePaint);
 
-    // Paper Thickness Highlight (Bottom rim)
-    final holeRimPaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+    // Paper Thickness Rim (Skeuomorphic depth)
+    final rimPaint = Paint()
+      ..color = Colors.white.withOpacity(0.35)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 0.8;
     canvas.drawArc(
       Rect.fromCircle(center: Offset(holeCenterX, holeCenterY), radius: holeRadius),
-      0.2, 2.7, // Bottom arc
+      0.2, 2.7,
       false,
-      holeRimPaint,
+      rimPaint,
     );
 
-    // --- CAMADA 2: As Sombras Projetadas (Drop Shadows) ---
-    // Trajectory constants for shadow and metal
-    final start = Offset(0, size.height * 0.9);
+    // --- GEOMETRIA DA ESPIRAL (CRÍTICA) ---
+    // Elegant high-arch elliptical "C" loop
+    final start = Offset(6, size.height * 0.88);
     final end = Offset(holeCenterX, holeCenterY);
-    final cp1 = Offset(size.width * 0.1, -size.height * 0.7);
-    final cp2 = Offset(size.width * 0.8, -size.height * 0.3); // Adjusted cp2 for shorter span
+    // Control points tuned for the "tall" sweep seen in reference 2
+    final cp1 = Offset(size.width * 0.1, -size.height * 0.65);
+    final cp2 = Offset(size.width * 0.75, -size.height * 0.15);
 
-    final shadowPath = Path();
-    shadowPath.moveTo(start.dx + 2, start.dy + 3);
-    shadowPath.cubicTo(
-      cp1.dx + 2, cp1.dy + 3, 
-      cp2.dx + 2, cp2.dy + 3, 
-      end.dx + 1, end.dy + 1
-    );
+    final path = Path();
+    path.moveTo(start.dx, start.dy);
+    path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
 
+    // --- CAMADA 2: Sombras Projetadas (Soft Drop Shadows) ---
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.2)
+      ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      ..strokeWidth = 3.8
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2);
+    
+    final shadowPath = Path();
+    shadowPath.moveTo(start.dx + 2, start.dy + 2);
+    shadowPath.cubicTo(cp1.dx + 2, cp1.dy + 2, cp2.dx + 2, cp2.dy + 2, end.dx + 0.5, end.dy + 0.5);
     canvas.drawPath(shadowPath, shadowPaint);
 
-    // --- CAMADA 3: A Espiral Metálica (Rose Gold Coil) ---
-    final coilPath = Path();
-    coilPath.moveTo(start.dx, start.dy);
-    coilPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
-
-    // Transversal Metallic Gradient (Cylindrical Lighting)
-    final roseGoldBase = const Color(0xFFB76E79);
-    final darkCopper = const Color(0xFF633A3F);
-    final specularWhite = const Color(0xFFFFFFFF);
-
+    // --- CAMADA 3: O Fio Metálico (Rose Gold Champagne) ---
+    // Refined multi-stop gradient for realistic cylindrical lighting
+    const champagneGold = Color(0xFFFBE8E2);   // Specular peak
+    const roseGoldMid = Color(0xFFE4B2A3);     // Base tone
+    const roseGoldShadow = Color(0xFFA67C74);  // Deep tone
+    
     final metalGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        darkCopper,
-        roseGoldBase,
-        specularWhite.withOpacity(0.9),
-        roseGoldBase,
-        darkCopper,
+        roseGoldShadow,
+        roseGoldMid,
+        champagneGold,
+        roseGoldMid,
+        roseGoldShadow,
       ],
-      stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+      stops: const [0.0, 0.25, 0.55, 0.8, 1.0],
     );
 
     final metalPaint = Paint()
       ..shader = metalGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.5
+      ..strokeWidth = 3.2 // Thinner, more elegant wire
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawPath(coilPath, metalPaint);
+    canvas.drawPath(path, metalPaint);
 
-    // Final Specular Pop (Upper shine)
-    final popPaint = Paint()
-      ..color = Colors.white.withOpacity(0.35)
+    // --- CAMADA 4: Brilho de Borda (Specular Pop) ---
+    // Adds that "sharp edge" metallic feeling
+    final edgePopPaint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
 
-    final popPath = Path();
-    popPath.moveTo(size.width * 0.2, size.height * 0.3);
-    popPath.quadraticBezierTo(
-      size.width * 0.55, -size.height * 0.35, 
-      size.width * 0.9, size.height * 0.25
-    );
-    canvas.drawPath(popPath, popPaint);
+    final edgePopPath = Path();
+    edgePopPath.moveTo(size.width * 0.15, size.height * 0.2);
+    edgePopPath.quadraticBezierTo(size.width * 0.5, -size.height * 0.3, size.width * 0.8, size.height * 0.2);
+    canvas.drawPath(edgePopPath, edgePopPaint);
 
-    // Layer 4: Restore State (Clipping ends)
     canvas.restore();
   }
 
