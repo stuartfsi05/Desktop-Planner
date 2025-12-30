@@ -332,96 +332,82 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // Pass 1: Local Clipping (Emergence from binder)
+    // 1. Context Clipping (Disappear behind cover edge)
     canvas.save();
-    canvas.clipRect(Rect.fromLTWH(4, -size.height, size.width, size.height * 2));
+    canvas.clipRect(Rect.fromLTWH(6, -size.height, size.width, size.height * 2));
 
-    // --- CAMADA 1: Os Furos (Punch Holes) ---
-    // Repositioned to X=42 for a tighter, refined look
-    final holeCenterX = 42.0;
-    final holeCenterY = size.height * 0.55;
+    // --- CAMADA 1: Furo Físico (Punch Hole) ---
+    final holeX = 42.0;
+    final holeY = size.height * 0.35; // Positioned higher for descending motion
     final holeRadius = 3.6;
-    
-    final holePaint = Paint()
-      ..color = const Color(0xFF222222)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(holeCenterX, holeCenterY), holeRadius, holePaint);
 
-    // Paper Thickness Rim (Skeuomorphic depth)
-    final rimPaint = Paint()
-      ..color = Colors.white.withOpacity(0.35)
+    final holePaint = Paint()
+      ..color = const Color(0xFF1A1A1A) // Deep hole
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(holeX, holeY), holeRadius, holePaint);
+
+    final holeRim = Paint()
+      ..color = Colors.white.withOpacity(0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(holeCenterX, holeCenterY), radius: holeRadius),
-      0.2, 2.7,
-      false,
-      rimPaint,
-    );
+    canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- GEOMETRIA DA ESPIRAL (CRÍTICA) ---
-    // Elegant high-arch elliptical "C" loop
-    final start = Offset(6, size.height * 0.88);
-    final end = Offset(holeCenterX, holeCenterY);
-    // Control points tuned for the "tall" sweep seen in reference 2
-    final cp1 = Offset(size.width * 0.1, -size.height * 0.65);
-    final cp2 = Offset(size.width * 0.75, -size.height * 0.15);
+    // --- GEOMETRIA DA ESPIRAL (DESCENDENTE) ---
+    // The "Descending Spiral" motion: Exit Hole (High) -> Loop -> Behind Cover (Low)
+    final start = Offset(holeX, holeY);
+    final end = Offset(2, size.height * 0.9); // Ends lower and left
+    
+    // Control points for a voluminous elliptical "C"
+    final cp1 = Offset(size.width * 1.1, -size.height * 0.3); // Arches right/up from hole
+    final cp2 = Offset(size.width * -0.3, -size.height * 0.2); // Sweeps left/high
 
-    final path = Path();
-    path.moveTo(start.dx, start.dy);
-    path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
+    final coilPath = Path();
+    coilPath.moveTo(start.dx, start.dy);
+    coilPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, end.dx, end.dy);
 
-    // --- CAMADA 2: Sombras Projetadas (Soft Drop Shadows) ---
+    // --- CAMADA 2: Sombra Suave (Drop Shadow) ---
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.12)
+      ..color = Colors.black.withOpacity(0.14)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.8
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2);
+      ..strokeWidth = 4.2
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
     
     final shadowPath = Path();
-    shadowPath.moveTo(start.dx + 2, start.dy + 2);
-    shadowPath.cubicTo(cp1.dx + 2, cp1.dy + 2, cp2.dx + 2, cp2.dy + 2, end.dx + 0.5, end.dy + 0.5);
+    shadowPath.moveTo(start.dx + 1.5, start.dy + 2);
+    shadowPath.cubicTo(cp1.dx + 1.5, cp1.dy + 2, cp2.dx + 1.5, cp2.dy + 2, end.dx + 1.5, end.dy + 2);
     canvas.drawPath(shadowPath, shadowPaint);
 
-    // --- CAMADA 3: O Fio Metálico (Rose Gold Champagne) ---
-    // Refined multi-stop gradient for realistic cylindrical lighting
-    const champagneGold = Color(0xFFFBE8E2);   // Specular peak
-    const roseGoldMid = Color(0xFFE4B2A3);     // Base tone
-    const roseGoldShadow = Color(0xFFA67C74);  // Deep tone
-    
+    // --- CAMADA 3: Fio Metálico (Rose Gold Champagne) ---
+    const champagneGold = Color(0xFFFBE8E2);   
+    const roseGoldMid = Color(0xFFE4B2A3);     
+    const roseGoldShadow = Color(0xFFA67C74);  
+
     final metalGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [
-        roseGoldShadow,
-        roseGoldMid,
-        champagneGold,
-        roseGoldMid,
-        roseGoldShadow,
-      ],
-      stops: const [0.0, 0.25, 0.55, 0.8, 1.0],
+      colors: [ roseGoldShadow, roseGoldMid, champagneGold, roseGoldMid, roseGoldShadow ],
+      stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
     );
 
     final metalPaint = Paint()
       ..shader = metalGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2 // Thinner, more elegant wire
+      ..strokeWidth = 3.5
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawPath(path, metalPaint);
+    canvas.drawPath(coilPath, metalPaint);
 
-    // --- CAMADA 4: Brilho de Borda (Specular Pop) ---
-    // Adds that "sharp edge" metallic feeling
-    final edgePopPaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+    // --- CAMADA 4: Brilho Especular (Metal Pop) ---
+    final popPaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
 
-    final edgePopPath = Path();
-    edgePopPath.moveTo(size.width * 0.15, size.height * 0.2);
-    edgePopPath.quadraticBezierTo(size.width * 0.5, -size.height * 0.3, size.width * 0.8, size.height * 0.2);
-    canvas.drawPath(edgePopPath, edgePopPaint);
+    final popPath = Path();
+    popPath.moveTo(size.width * 0.2, size.height * 0.15);
+    popPath.quadraticBezierTo(size.width * 0.6, -size.height * 0.3, size.width * 0.9, size.height * 0.2);
+    canvas.drawPath(popPath, popPaint);
 
     canvas.restore();
   }
