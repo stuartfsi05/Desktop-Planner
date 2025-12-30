@@ -38,38 +38,38 @@ class PhysicalPlannerLayout extends StatelessWidget {
     return Scaffold(
       backgroundColor: deskColor,
       body: Center(
-        child: Container(
-          // Limits the binder max size for large screens
-          constraints: const BoxConstraints(maxWidth: 1400, maxHeight: 950),
-          margin: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: binderColor,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
+        child: Stack(
+          clipBehavior: Clip.none, // Allow spirals to hang over the edge
+          children: [
+            Container(
+              // Limits the binder max size for large screens
+              constraints: const BoxConstraints(maxWidth: 1400, maxHeight: 950),
+              margin: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: binderColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                  ),
+                ],
+                // Subtle gradient for binder texture
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF2B5C0), // Lighter Pink
+                    Color(0xFFEA9DAB), // Base Pink
+                    Color(0xFFD68A98), // Darker Pink
+                  ],
+                )
               ),
-            ],
-            // Subtle gradient for binder texture
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFF2B5C0), // Lighter Pink
-                Color(0xFFEA9DAB), // Base Pink
-                Color(0xFFD68A98), // Darker Pink
-              ],
-            )
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Stack(
-            children: [
-              // MAIN ROW CONTENT
-              Row(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Row(
                 children: [
-                  // 2. Padding/Space for Spine (Reduced to 15 for a narrower look)
+                  // 2. Padding/Space for Spine (Visual logic for spirals is now external)
                   const SizedBox(width: 15),
 
                   // 3. Main Paper Area
@@ -77,7 +77,6 @@ class PhysicalPlannerLayout extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         color: paperColor,
-                        // borderRadius: BorderRadius.zero, 
                         boxShadow: [
                           BoxShadow(color: paperShadow, blurRadius: 8, offset: const Offset(2, 0)),
                         ],
@@ -97,11 +96,6 @@ class PhysicalPlannerLayout extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            
-                            // LEFT TABS (Weeks) - Inside the paper?
-                            // User request: "Deixar as abas da lateral direitas coladas no quadro branco"
-                            // Left tabs are internal navigation. Let's keep them as is or adjust if requested.
-                            // Assuming "Abas da lateral direita" refers to Months.
                             
                             // Content with padding for tabs
                             Padding(
@@ -127,7 +121,7 @@ class PhysicalPlannerLayout extends StatelessWidget {
                             if (showLeftTabs)
                               Positioned(
                                 left: 0,
-                                top: 120, // Align with calendar rows
+                                top: 120, 
                                 bottom: 80,
                                 width: 50, 
                                 child: Column(
@@ -141,42 +135,42 @@ class PhysicalPlannerLayout extends StatelessWidget {
                     ),
                   ),
 
-                  // 4. Right Tabs (Months) - "Coladas no quadro branco"
-                  // We remove the SizedBox width constraint or ensure the tabs fill it completely without margin
+                  // 4. Right Tabs (Months)
                   SizedBox(
                     width: 50,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center, // Center vertically with margin
-                      crossAxisAlignment: CrossAxisAlignment.start, // Align to left (touching paper)
+                      mainAxisAlignment: MainAxisAlignment.center, 
+                      crossAxisAlignment: CrossAxisAlignment.start, 
                       children: [
-                         const SizedBox(height: 40), // Top margin "binder style"
+                         const SizedBox(height: 40), 
                          Expanded(child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: _buildMonthTabs(context),
                          )),
-                         const SizedBox(height: 40), // Bottom margin
+                         const SizedBox(height: 40), 
                       ],
                     ),
                   ),
                 ],
               ),
-              
-              // 5. SPIRAL BINDING OVERLAY
-              Positioned(
-                left: 0, 
-                top: 0,
-                bottom: 0,
-                width: 80, // Expanded width for wider loops
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    12, 
-                    (index) => _buildSpiralRing(),
-                  ),
+            ),
+            
+            // 5. SPIRAL BINDING OVERLAY (EXTERNAL)
+            // Positioned relative to the binder, but can overflow into the gray area
+            Positioned(
+              left: 10, // Adjust to overlap the binder edge perfectly
+              top: 24,
+              bottom: 24,
+              width: 80, 
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(
+                  12, 
+                  (index) => _buildSpiralRing(),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -332,12 +326,12 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Context Clipping (Disappear behind cover edge - further left for wide loop)
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(2, -size.height, size.width, size.height * 2));
+    // Structural layout shift allows us to draw OUTSIDE the binder.
+    // We no longer need clipping here because we want the full loop.
 
     // --- CAMADA 1: Furo Físico (Punch Hole) ---
-    final holeX = 27.0;
+    // Repositioned hole within the spiral canvas
+    final holeX = 32.0;
     final holeY = size.height * 0.35; 
     final holeRadius = 4.0; 
 
@@ -352,14 +346,16 @@ class _SpiralPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- GEOMETRIA DA ESPIRAL (DESCENDENTE & WIDE) ---
-    // Mathematically tuned for a wide "C" that covers the pink spine area
+    // --- GEOMETRIA DA ESPIRAL (LOOP COMPLETO) ---
+    // This path starts at the hole and loops around the binder edge.
     final start = Offset(holeX, holeY);
-    final end = Offset(0, size.height * 0.9); // Tucked further left and down
+    // The "end" tucks behind the binder edge. Since the spiral is on top,
+    // we make it look like it's wrapping around.
+    final end = Offset(-10, size.height * 0.9); // Extends into the gray area!
     
-    // Control points for a broad, voluminous elliptical arc
-    final cp1 = Offset(size.width * 1.5, -size.height * 0.4); // Wide arch right
-    final cp2 = Offset(size.width * -0.8, -size.height * 0.1); // Wide arch left
+    // Voluminous, high-fidelity elliptical arc
+    final cp1 = Offset(size.width * 1.6, -size.height * 0.4); 
+    final cp2 = Offset(size.width * -1.2, -size.height * 0.1); 
 
     final coilPath = Path();
     coilPath.moveTo(start.dx, start.dy);
@@ -367,14 +363,14 @@ class _SpiralPainter extends CustomPainter {
 
     // --- CAMADA 2: Sombra Suave (Drop Shadow) ---
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.12)
+      ..color = Colors.black.withOpacity(0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8.0 
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
     
     final shadowPath = Path();
-    shadowPath.moveTo(start.dx + 2, start.dy + 3);
-    shadowPath.cubicTo(cp1.dx + 2, cp1.dy + 3, cp2.dx + 2, cp2.dy + 3, end.dx + 2, end.dy + 3);
+    shadowPath.moveTo(start.dx + 3, start.dy + 4);
+    shadowPath.cubicTo(cp1.dx + 3, cp1.dy + 4, cp2.dx + 3, cp2.dy + 4, end.dx + 3, end.dy + 4);
     canvas.drawPath(shadowPath, shadowPaint);
 
     // --- CAMADA 3: Fio Metálico (Rose Gold Champagne) ---
@@ -406,10 +402,8 @@ class _SpiralPainter extends CustomPainter {
 
     final popPath = Path();
     popPath.moveTo(size.width * 0.1, size.height * 0.1);
-    popPath.quadraticBezierTo(size.width * 0.6, -size.height * 0.4, size.width * 0.9, size.height * 0.2);
+    popPath.quadraticBezierTo(size.width * 0.6, -size.height * 0.4, size.width * 1.0, size.height * 0.2);
     canvas.drawPath(popPath, popPaint);
-
-    canvas.restore();
   }
 
   @override
