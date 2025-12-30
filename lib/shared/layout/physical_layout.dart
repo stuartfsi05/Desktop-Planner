@@ -339,7 +339,7 @@ class _SpiralPainter extends CustomPainter {
     canvas.clipRect(Rect.fromLTWH(8, -size.height, size.width - 8, size.height * 2));
 
     // --- CAMADA 1: Os Furos no Papel (Punch Holes) ---
-    final holeCenterX = size.width - 15.0; // Fixed x: ~65 in an 80px canvas
+    final holeCenterX = 45.0; // Shifted left to be closer to the fold
     final holeCenterY = size.height / 2;
     final holeRadius = 4.5;
     
@@ -366,7 +366,7 @@ class _SpiralPainter extends CustomPainter {
     final start = Offset(0, size.height * 0.9);
     final end = Offset(holeCenterX, holeCenterY);
     final cp1 = Offset(size.width * 0.1, -size.height * 0.7);
-    final cp2 = Offset(size.width * 1.1, -size.height * 0.3);
+    final cp2 = Offset(size.width * 0.8, -size.height * 0.3); // Adjusted cp2 for shorter span
 
     final shadowPath = Path();
     shadowPath.moveTo(start.dx + 2, start.dy + 3);
