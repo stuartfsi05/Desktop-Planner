@@ -330,25 +330,18 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // --- CONSTANTES DE GEOMETRIA (Deeper & Wider) ---
-    // holeX em 48.0 coloca o furo mais pra dentro da folha branca
+    // --- CONSTANTES DE GEOMETRIA (Física de Encadernação 3D) ---
     const double holeX = 48.0; 
-    final double holeY = size.height / 2; 
+    final double holeY = size.height * 0.4; // Ponto de saída do papel
     const double holeRadius = 4.0;
     
-    // spineX em -35.0 expande a espiral bem mais para a esquerda sobre a mesa
+    // spineX: O ponto mais à esquerda (na mesa)
     const double spineX = -35.0; 
-    const double archHeight = 28.0; // Aumentado para manter proporção do arco largo
+    const double archHeight = 26.0;
 
-    // --- LOGICA DE PROFUNDIDADE (TUCK-BEHIND) ---
-    const binderEdgeLocal = 14.0; 
-    const paperEdgeLocal = 29.0;
-    
-    canvas.save();
-    final visibleArea = Path()
-      ..addRect(Rect.fromLTWH(-150, -100, binderEdgeLocal + 150, size.height + 200)) 
-      ..addRect(Rect.fromLTWH(paperEdgeLocal, -100, size.width + 100, size.height + 200));
-    canvas.clipPath(visibleArea);
+    // Limites Físicos (Locais) do Fichário
+    const binderEdgeLocal = 14.0; // Onde o couro rosa começa
+    const paperEdgeLocal = 29.0;  // Onde a folha branca começa
 
     // --- CAMADA 1: O Furo no Papel ---
     final holePaint = Paint()
@@ -362,60 +355,95 @@ class _SpiralPainter extends CustomPainter {
       ..strokeWidth = 0.8;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- CAMADA 2: O Caminho da Espiral (Geometria Expandida) ---
-    final coilPath = Path();
-    coilPath.moveTo(holeX, holeY);
-    // Ajustado para um sweep mais largo e natural
-    coilPath.cubicTo(
-      holeX + 10, holeY - 4,        // CP1: Saída suave do furo
-      spineX + 25, holeY - archHeight, // CP2: Topo do arco (mais largo)
-      spineX, holeY - (archHeight * 0.4) // Ponto Final: Mergulho na lombada
+    // --- DEFINIÇÃO DOS CAMINHOS (IDAS E VOLTAS) ---
+    
+    // 1. ARCO SUPERIOR (A PARTE QUE VAI POR CIMA)
+    // Sai do furo, passa sobre o couro e vai para a mesa
+    final upperPath = Path();
+    upperPath.moveTo(holeX, holeY);
+    upperPath.cubicTo(
+      holeX + 12, holeY - 4,          // CP1: Saída do furo
+      spineX + 20, holeY - archHeight, // CP2: Topo do arco (visível sobre o rosa)
+      spineX, holeY - (archHeight * 0.3) // Ponto Externo (na mesa)
     );
 
-    // --- CAMADA 3: Sombra Projetada (Drop Shadow) ---
+    // 2. ARCO INFERIOR (A PARTE QUE VAI POR BAIXO - O RETORNO)
+    // Volta da mesa e mergulha atrás da capa rosa
+    final lowerPath = Path();
+    lowerPath.moveTo(spineX, holeY - (archHeight * 0.3));
+    lowerPath.cubicTo(
+      spineX - 10, holeY + (archHeight * 0.2), // Faz a curva externa
+      binderEdgeLocal - 5, holeY + (archHeight * 0.6), // Mirando para trás da capa
+      binderEdgeLocal, holeY + (archHeight * 0.5) // Mergulha na borda da capa
+    );
+
+    // --- SETUP DE MATERIAIS ---
+    const roseDark = Color(0xFF8B5E57);
+    const roseMid = Color(0xFFE4B2A3);
+    const roseLight = Color(0xFFFFF7F2); 
+
+    // Paint para a Sombra
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 7.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-    
-    canvas.save();
-    canvas.translate(4, 5); // Sombra mais profunda para arco maior
-    canvas.drawPath(coilPath, shadowPaint);
-    canvas.restore();
 
-    // --- CAMADA 4: O Metal (Corpo Rose Gold Champagne) ---
-    const roseDark = Color(0xFF8B5E57);
-    const roseMid = Color(0xFFE4B2A3);
-    const roseLight = Color(0xFFFFF7F2); 
-
+    // Paint para o Metal
     final metalGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [roseDark, roseMid, roseLight, roseMid, roseDark],
       stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
     );
-
     final metalPaint = Paint()
-      ..shader = metalGradient.createShader(Rect.fromLTWH(spineX, holeY - archHeight, holeX - spineX, archHeight))
+      ..shader = metalGradient.createShader(Rect.fromLTWH(spineX, holeY - archHeight, holeX - spineX, archHeight * 2))
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6.0 
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawPath(coilPath, metalPaint);
-
-    // --- CAMADA 5: Brilho Especular (Polimento Rim Light) ---
     final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.55)
+      ..color = Colors.white.withOpacity(0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
       ..strokeCap = StrokeCap.round;
-      
+
+    // --- EXECUÇÃO DO DESENHO EM CAMADAS (ORDER OF DEPTH) ---
+
+    // A. DESENHAR O ARCO INFERIOR (O que passa por baixo)
+    // Clipamos para que ele só apareça na área da MESA
     canvas.save();
-    canvas.translate(-0.5, -1.0); 
-    canvas.drawPath(coilPath, highlightPaint);
+    canvas.clipRect(Rect.fromLTWH(-150, -100, binderEdgeLocal + 150, 1000));
+    
+    // Desenha sombra do retorno
+    canvas.save();
+    canvas.translate(3, 4);
+    canvas.drawPath(lowerPath, shadowPaint);
+    canvas.restore();
+    
+    // Desenha o metal do retorno
+    canvas.drawPath(lowerPath, metalPaint);
     canvas.restore();
 
+    // B. DESENHAR O ARCO SUPERIOR (O que passa por cima)
+    // Sem clipping universal, ele deve cobrir o papel e o couro
+    canvas.save();
+    
+    // Desenha sombra da ida
+    canvas.save();
+    canvas.translate(4, 5);
+    canvas.drawPath(upperPath, shadowPaint);
+    canvas.restore();
+    
+    // Desenha o metal da ida
+    canvas.drawPath(upperPath, metalPaint);
+    
+    // Desenha o brilho especular na ida
+    canvas.save();
+    canvas.translate(-0.5, -1.0);
+    canvas.drawPath(upperPath, highlightPaint);
+    canvas.restore();
+    
     canvas.restore();
   }
 
