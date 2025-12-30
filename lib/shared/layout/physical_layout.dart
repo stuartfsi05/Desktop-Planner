@@ -332,15 +332,14 @@ class PhysicalPlannerLayout extends StatelessWidget {
 class _SpiralPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Context Clipping (Disappear behind cover edge - tuned for narrow spine)
+    // 1. Context Clipping (Disappear behind cover edge - further left for wide loop)
     canvas.save();
-    canvas.clipRect(Rect.fromLTWH(4, -size.height, size.width, size.height * 2));
+    canvas.clipRect(Rect.fromLTWH(2, -size.height, size.width, size.height * 2));
 
     // --- CAMADA 1: Furo Físico (Punch Hole) ---
-    // Repositioned to X=27 to account for the narrow 15px spine
     final holeX = 27.0;
     final holeY = size.height * 0.35; 
-    final holeRadius = 4.0; // Slightly larger for thicker wire
+    final holeRadius = 4.0; 
 
     final holePaint = Paint()
       ..color = const Color(0xFF1A1A1A)
@@ -353,13 +352,14 @@ class _SpiralPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawArc(Rect.fromCircle(center: Offset(holeX, holeY), radius: holeRadius), 0.2, 2.7, false, holeRim);
 
-    // --- GEOMETRIA DA ESPIRAL (DESCENDENTE) ---
+    // --- GEOMETRIA DA ESPIRAL (DESCENDENTE & WIDE) ---
+    // Mathematically tuned for a wide "C" that covers the pink spine area
     final start = Offset(holeX, holeY);
-    final end = Offset(1, size.height * 0.95); // Tucks further left
+    final end = Offset(0, size.height * 0.9); // Tucked further left and down
     
-    // Control points for a voluminous elliptical "C"
-    final cp1 = Offset(size.width * 1.3, -size.height * 0.3); // Wider sweep
-    final cp2 = Offset(size.width * -0.5, -size.height * 0.2); 
+    // Control points for a broad, voluminous elliptical arc
+    final cp1 = Offset(size.width * 1.5, -size.height * 0.4); // Wide arch right
+    final cp2 = Offset(size.width * -0.8, -size.height * 0.1); // Wide arch left
 
     final coilPath = Path();
     coilPath.moveTo(start.dx, start.dy);
@@ -367,10 +367,10 @@ class _SpiralPainter extends CustomPainter {
 
     // --- CAMADA 2: Sombra Suave (Drop Shadow) ---
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.14)
+      ..color = Colors.black.withOpacity(0.12)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 8.0 // Doubled thickness (formerly 4.2)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
+      ..strokeWidth = 8.0 
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
     
     final shadowPath = Path();
     shadowPath.moveTo(start.dx + 2, start.dy + 3);
@@ -392,7 +392,7 @@ class _SpiralPainter extends CustomPainter {
     final metalPaint = Paint()
       ..shader = metalGradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 7.0 // Doubled thickness (formerly 3.5)
+      ..strokeWidth = 7.0 
       ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(coilPath, metalPaint);
@@ -401,12 +401,12 @@ class _SpiralPainter extends CustomPainter {
     final popPaint = Paint()
       ..color = Colors.white.withOpacity(0.5)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0 // Doubled (formerly 1.0)
+      ..strokeWidth = 2.0 
       ..strokeCap = StrokeCap.round;
 
     final popPath = Path();
-    popPath.moveTo(size.width * 0.2, size.height * 0.15);
-    popPath.quadraticBezierTo(size.width * 0.6, -size.height * 0.3, size.width * 0.9, size.height * 0.2);
+    popPath.moveTo(size.width * 0.1, size.height * 0.1);
+    popPath.quadraticBezierTo(size.width * 0.6, -size.height * 0.4, size.width * 0.9, size.height * 0.2);
     canvas.drawPath(popPath, popPaint);
 
     canvas.restore();
