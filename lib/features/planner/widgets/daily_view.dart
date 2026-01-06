@@ -59,23 +59,10 @@ class _DailyViewState extends State<DailyView> {
 
   @override
   Widget build(BuildContext context) {
-    // Format: "Monday, January 1st" (in PT-BR)
-    String dateStr = DateFormat('EEEE, d', 'pt_BR').format(widget.date);
-    String monthStr = DateFormat('MMMM', 'pt_BR').format(widget.date);
-    // Capitalize
-    dateStr = dateStr[0].toUpperCase() + dateStr.substring(1);
-    monthStr = monthStr[0].toUpperCase() + monthStr.substring(1);
 
-    final fullTitle = "$dateStr de $monthStr";
+
     final theme = Theme.of(context);
-
-    // Standardized smaller font
-    final titleStyle = GoogleFonts.lato(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      color: theme.primaryColor,
-    );
-
+    
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 24,
@@ -84,15 +71,7 @@ class _DailyViewState extends State<DailyView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Center(
-            child: Text(
-              fullTitle,
-              style: titleStyle,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 12),
+          // Header Removed (Using Global Header now)
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -338,7 +317,16 @@ class _DailyViewState extends State<DailyView> {
                 Divider(height: 1, indent: 48, color: Colors.grey.shade100),
             itemBuilder: (context, index) {
               final item = items[index];
-              return ListTile(
+              return GestureDetector(
+                onSecondaryTapDown: (details) async {
+                  await _showPostponeMenu(
+                    context,
+                    details.globalPosition,
+                    item,
+                    provider,
+                  );
+                },
+                child: ListTile(
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -376,12 +364,95 @@ class _DailyViewState extends State<DailyView> {
                       provider.deleteDashboardItem(item.id!, widget.date),
                   splashRadius: 16,
                 ),
+                ),
               );
             },
           );
+
         },
       ),
     );
+  }
+
+  Future<void> _showPostponeMenu(
+    BuildContext context,
+    Offset position,
+    DashboardItem item,
+    TaskProvider provider,
+  ) async {
+    final result = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        position.dx + 1,
+        position.dy + 1,
+      ),
+      items: [
+        const PopupMenuItem(
+          value: 'tomorrow',
+          child: Row(
+            children: [
+              Icon(Icons.event_repeat, size: 18, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Adiar para Amanhã'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'next_week',
+          child: Row(
+            children: [
+              Icon(Icons.next_week, size: 18, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Adiar para Próxima Semana'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'pick_date',
+          child: Row(
+            children: [
+              Icon(Icons.calendar_month, size: 18, color: Colors.purple),
+              SizedBox(width: 8),
+              Text('Escolher Data...'),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (result == null) return;
+
+    final currentDate = widget.date;
+    DateTime? newDate;
+
+    if (result == 'tomorrow') {
+      newDate = currentDate.add(const Duration(days: 1));
+    } else if (result == 'next_week') {
+      newDate = currentDate.add(const Duration(days: 7));
+    } else if (result == 'pick_date') {
+      newDate = await showDatePicker(
+        context: context,
+        initialDate: currentDate.add(const Duration(days: 1)),
+        firstDate: DateTime.now().subtract(const Duration(days: 365)),
+        lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+      );
+    }
+
+    if (newDate != null && context.mounted) {
+      await provider.moveDashboardItem(item, newDate, currentDate);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Tarefa movida para ${DateFormat('dd/MM', 'pt_BR').format(newDate)}",
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPrioritySection(
@@ -557,17 +628,37 @@ class _DailyViewState extends State<DailyView> {
                           ),
                         )
                       : null,
-                  trailing: IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: Colors.grey.shade400,
-                      size: 18,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () {
-                      if (event.id != null) provider.deleteEvent(event.id!);
-                    },
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit_outlined, // Edit Pencil
+                          color: Colors.grey.shade400,
+                          size: 18,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          if (event.id != null) {
+                            _showEditEventDialog(context, event);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Colors.grey.shade400,
+                          size: 18,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          if (event.id != null) provider.deleteEvent(event.id!);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -620,6 +711,64 @@ class _DailyViewState extends State<DailyView> {
                   detailsController.text,
                   widget.date,
                 );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Salvar"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showEditEventDialog(
+    BuildContext context,
+    CalendarEvent event,
+  ) async {
+    final titleController = TextEditingController(text: event.title);
+    final detailsController = TextEditingController(text: event.description);
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Editar Compromisso"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: "Título",
+                hintText: "Reunião, Médico...",
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: detailsController,
+              decoration: const InputDecoration(
+                labelText: "Detalhes (Opcional)",
+                hintText: "Horário, Local...",
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (titleController.text.isNotEmpty) {
+                // Update existing event object
+                event.title = titleController.text;
+                event.description = detailsController.text;
+
+                Provider.of<TaskProvider>(
+                  context,
+                  listen: false,
+                ).updateEvent(event);
                 Navigator.pop(context);
               }
             },

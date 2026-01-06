@@ -70,14 +70,22 @@ class _VerticalWeeklyViewState extends State<VerticalWeeklyView> {
   }
 
   List<DateTime> _getDaysInWeek() {
-    final int startDay = (widget.weekIndex * 7); // 0-based offset
-    final List<DateTime> days = [];
+    // 1. Get the 1st day of the selected month
     final firstDayOfMonth = DateTime(widget.year, widget.monthIndex + 1, 1);
 
+    // 2. Find the Monday that starts the grid for this month
+    // weekday 1=Mon, ..., 7=Sun.
+    // To get to Monday, subtract (weekday - 1) days.
+    final firstDayOfGrid = firstDayOfMonth.subtract(
+      Duration(days: firstDayOfMonth.weekday - 1),
+    );
+
+    // 3. Add the week offset
+    final startOfWeek = firstDayOfGrid.add(Duration(days: widget.weekIndex * 7));
+
+    final List<DateTime> days = [];
     for (int i = 0; i < 7; i++) {
-      // Proper Date Math: Add days to the first of the month
-      final date = firstDayOfMonth.add(Duration(days: startDay + i));
-      days.add(date);
+      days.add(startOfWeek.add(Duration(days: i)));
     }
     return days;
   }

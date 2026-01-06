@@ -174,6 +174,20 @@ class TaskProvider with ChangeNotifier {
     await loadDashboard(date);
   }
 
+  Future<void> moveDashboardItem(
+    DashboardItem item,
+    DateTime newDate,
+    DateTime currentDate,
+  ) async {
+    final newDateStr = newDate.toIso8601String().split('T')[0];
+    item.date = newDateStr;
+    // We update the item with the new date.
+    // Position might duplicate, but usually acceptable for this simple app.
+    // Ideally we would fetch max position for new date, but distinct dates segregate lists.
+    await _dbHelper.updateDashboardItem(item.toMap());
+    await loadDashboard(currentDate); // Reload current view to remove item
+  }
+
   // --- EVENTS LOGIC ---
   List<CalendarEvent> _events = [];
   List<CalendarEvent> get events => _events;
@@ -190,6 +204,11 @@ class TaskProvider with ChangeNotifier {
 
   Future<void> deleteEvent(int id) async {
     await _dbHelper.deleteEvent(id);
+    await loadTasks();
+  }
+
+  Future<void> updateEvent(CalendarEvent event) async {
+    await _dbHelper.updateEvent(event.toMap());
     await loadTasks();
   }
 

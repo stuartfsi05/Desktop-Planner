@@ -8,6 +8,9 @@ import 'package:amanda_planner/features/planner/widgets/daily_view.dart';
 import 'package:amanda_planner/features/planner/widgets/vertical_weekly_view.dart';
 import 'package:amanda_planner/features/welcome/welcome_screen.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -187,11 +190,18 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       onWeekSelected: (index) {
+        // Calculate start of the week for the header
+        final firstDayOfMonth = DateTime(_selectedYear, _selectedMonthIndex + 1, 1);
+        final firstDayOfGrid = firstDayOfMonth.subtract(
+          Duration(days: firstDayOfMonth.weekday - 1),
+        );
+        final startOfWeek = firstDayOfGrid.add(Duration(days: index * 7));
+
         _navigateTo(
           monthIndex: _selectedMonthIndex,
           weekIndex: index,
           view: PlannerView.week,
-          displayDate: _currentDisplayDate,
+          displayDate: startOfWeek,
         );
       },
       // Pass NULL if history is empty to hide arrows
@@ -201,9 +211,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // 1. MAIN APP CONTENT
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // _buildHeader() removed to maximize space
+              _buildGlobalHeader(),
               Expanded(child: _buildBody()),
             ],
           ),
@@ -252,57 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const SizedBox(width: 80), // Balance Today button
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left, color: Colors.black26),
-                      onPressed: () {
-                        setState(() {
-                          _selectedYear--;
-                        });
-                      },
-                    ),
-                    Text(
-                      "${_getMonthName(_selectedMonthIndex)} de $_selectedYear",
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right, color: Colors.black26),
-                      onPressed: () {
-                        setState(() {
-                          _selectedYear++;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _selectedYear = DateTime.now().year;
-                    _selectedMonthIndex = DateTime.now().month - 1;
-                    _currentDisplayDate = DateTime.now();
-                  });
-                },
-                icon: const Icon(Icons.today, size: 18),
-                label: const Text("Hoje"),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF24555D),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 10),
           const SizedBox(height: 20),
           Expanded(
             child: MonthlyCalendar(
@@ -353,6 +313,103 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
     return months[index];
   }
+  Widget _buildGlobalHeader() {
+    // Format: "Segunda-feira, 5 de Janeiro de 2026"
+    // Use the current locale (pt_BR)
+    String dateStr = DateFormat("EEEE, d 'de' MMMM 'de' y", "pt_BR").format(
+      _currentDisplayDate,
+    );
+    // Capitalize words (except 'de')
+    dateStr = dateStr.split(' ').map((word) {
+      if (word == 'de') return word;
+      if (word.isEmpty) return '';
+      return '${word[0].toUpperCase()}${word.substring(1)}';
+    }).join(' ');
+
+    return Container(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Show Year Navigation Arrows ONLY if in Month View
+              // (User asked for Year in header, keeping nav functionality similar to before)
+              if (_currentView == PlannerView.month)
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, color: Colors.black26),
+                  onPressed: () {
+                    setState(() {
+                      _selectedYear--;
+                      // Update display date to keep synced
+                      _currentDisplayDate = DateTime(
+                        _selectedYear,
+                        _selectedMonthIndex + 1,
+                        1,
+                      );
+                    });
+                  },
+                ),
+              Text(
+                dateStr,
+                style: GoogleFonts.lato(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF24555D),
+                ),
+              ),
+              if (_currentView == PlannerView.month)
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, color: Colors.black26),
+                  onPressed: () {
+                    setState(() {
+                      _selectedYear++;
+                      _currentDisplayDate = DateTime(
+                        _selectedYear,
+                        _selectedMonthIndex + 1,
+                        1,
+                      );
+                    });
+                  },
+                ),
+            ],
+          ),
+          // Keep "Hoje" button logic? It was in MonthView before.
+          // Let's bring it here but positioned right, or maybe user didn't ask for it explicitly but it's useful.
+          // I will leave it out for now to keep it clean as requested: only date info.
+          // Actually, let's keep it accessible if possible.
+          Positioned(
+            right: 20,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  final now = DateTime.now();
+                  _selectedYear = now.year;
+                  _selectedMonthIndex = now.month - 1;
+                  _currentDisplayDate = now;
+                  _currentView = PlannerView.day; // Jump to today in day view? Or keep view?
+                  // Previous "Hoje" in month view reset everything.
+                  // Let's make it smarter: just go to today's date in current view?
+                  // Or standard reset:
+                  _selectedWeekIndex = -1; // Reset week
+                  _currentView = PlannerView.month; // Defaulting back to month like before
+                });
+              },
+              icon: const Icon(Icons.today, size: 18),
+              label: const Text("Hoje"),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF24555D),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 }
 
 class NavigationState {

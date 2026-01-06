@@ -160,14 +160,16 @@ class PhysicalPlannerLayout extends StatelessWidget {
               top: 24,
               bottom: 24,
               width: 80,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  12,
-                  (index) => Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    child: _buildSpiralRing(),
+              child: IgnorePointer(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    12,
+                    (index) => Container(
+                      height: 50,
+                      alignment: Alignment.center,
+                      child: _buildSpiralRing(),
+                    ),
                   ),
                 ),
               ),

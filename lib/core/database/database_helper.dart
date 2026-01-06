@@ -157,6 +157,16 @@ class DatabaseHelper {
     return await db.delete('events', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<int> updateEvent(Map<String, dynamic> event) async {
+    final Database db = await database;
+    return await db.update(
+      'events',
+      event,
+      where: 'id = ?',
+      whereArgs: [event['id']],
+    );
+  }
+
   // Dashboard Operations
 
   // Notes
